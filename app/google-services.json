@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "899032698913",
+    "project_id": "balizapp-4e495",
+    "storage_bucket": "balizapp-4e495.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:899032698913:android:ffd370cfe96008716f5360",
+        "android_client_info": {
+          "package_name": "com.example.balizapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "899032698913-38k263idtd9psioo7r845n7hbos2j1gp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.balizapp",
+            "certificate_hash": "ab1d082d8300bd1127493e41174523b690310628"
+          }
+        },
+        {
+          "client_id": "899032698913-4382der7mvr6rnq75pphps14nt1o6k0r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTRPqzRFCVojrhwzFnBtsBZ4NkVP4WtZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "899032698913-4382der7mvr6rnq75pphps14nt1o6k0r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
