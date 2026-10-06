@@ -12,6 +12,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,8 +65,18 @@ fun AppNavHost(
     userName: String?,
     userEmail: String?,
     onSignOut: () -> Unit,
+    openReturnToCar: String? = null,
+    onOpenReturnToCarHandled: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
 ) {
+    // Se tocó una notificación de vencimiento: ir directo a "Volver al auto".
+    LaunchedEffect(openReturnToCar) {
+        if (openReturnToCar != null) {
+            navController.navigate(ReturnToCarRoute(openReturnToCar)) { launchSingleTop = true }
+            onOpenReturnToCarHandled()
+        }
+    }
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showBottomBar = topLevelDestinations.any { currentDestination.isOn(it.routeClass) }

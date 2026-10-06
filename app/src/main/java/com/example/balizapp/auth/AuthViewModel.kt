@@ -8,6 +8,7 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.fragment.app.FragmentActivity
 import com.example.balizapp.data.UserRepository
+import com.example.balizapp.notifications.ReminderScheduler
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseNetworkException
@@ -115,6 +116,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     fun signOut(activityContext: android.content.Context) {
         viewModelScope.launch {
             repo.signOut(activityContext)
+            ReminderScheduler(getApplication<Application>()).cancelAll() // no deben sonar avisos de esta cuenta
             _state.update { AuthUiState(status = AuthStatus.SignedOut) }
         }
     }

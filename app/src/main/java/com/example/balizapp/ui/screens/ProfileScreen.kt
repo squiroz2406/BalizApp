@@ -1,5 +1,16 @@
 package com.example.balizapp.ui.screens
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.example.balizapp.notifications.Notifications
+import com.example.balizapp.notifications.ReminderScheduler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -106,6 +117,8 @@ fun ProfileScreen(
                 }
             }
 
+            AlertsStatus()
+
             state.error?.let { msg ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
@@ -129,6 +142,62 @@ fun ProfileScreen(
             onDone = { editing = null },
         )
     }
+}
+
+/**
+ * Estado de los permisos que necesitan los avisos (RF7) y un aviso de prueba.
+ * Se vuelve a leer cada vez que la pantalla queda visible (por ejemplo, al volver de Ajustes).
+ */
+@Composable
+private fun AlertsStatus() {
+    val context = LocalContext.current
+    val scheduler = remember { ReminderScheduler(context) }
+    var canNotify by remember { mutableStateOf(Notifications.canPost(context)) }
+    var canExact by remember { mutableStateOf(scheduler.canScheduleExact()) }
+    var testSent by remember { mutableStateOf(false) }
+
+    LifecycleResumeEffect(Unit) {
+        canNotify = Notifications.canPost(context)
+        canExact = scheduler.canScheduleExact()
+        onPauseOrDispose { }
+    }
+    val requestNotifications = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> canNotify = granted && Notifications.canPost(context) }
+
+    if (!canNotify) {
+        Text(
+            "Las notificaciones están desactivadas: no vas a recibir los avisos.",
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+        )
+        TextButton(onClick = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                context.startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                )
+            }
+        }) { Text("Activar notificaciones") }
+    }
+    if (!canExact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        Text(
+            "Sin \"Alarmas y recordatorios\" el aviso puede llegar unos minutos tarde.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+        )
+        TextButton(onClick = {
+            context.startActivity(
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
+            )
+        }) { Text("Permitir alarmas exactas") }
+    }
+    TextButton(
+        onClick = { scheduler.scheduleTest(seconds = 10); testSent = true },
+        enabled = canNotify,
+    ) { Text(if (testSent) "Aviso de prueba programado (10 s)" else "Enviar un aviso de prueba") }
 }
 
 @Composable

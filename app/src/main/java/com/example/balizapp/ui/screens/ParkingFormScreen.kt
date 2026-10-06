@@ -1,5 +1,12 @@
 package com.example.balizapp.ui.screens
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
+import com.example.balizapp.notifications.Notifications
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,6 +72,20 @@ fun ParkingFormScreen(
     val state by vm.state.collectAsState()
     var showTimeDialog by remember { mutableStateOf(false) }
     val requestLocationPermission = rememberLocationPermissionRequest(vm::onLocationPermissionResult)
+
+    // Al elegir un límite de tiempo se pide (una vez) el permiso de notificaciones de Android 13+,
+    // necesario para el aviso de vencimiento (RF7).
+    val context = LocalContext.current
+    var askedNotifications by rememberSaveable { mutableStateOf(false) }
+    val requestNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(state.expiresAt != null) {
+        if (state.expiresAt != null && !askedNotifications &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Notifications.canPost(context)
+        ) {
+            askedNotifications = true
+            requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     // Al abrir un alta sin permiso, se pide una vez (la explicación queda visible en el formulario).
     LaunchedEffect(Unit) {
@@ -186,7 +207,8 @@ private fun ColumnScope.FormContent(
             )
         }
         Text(
-            state.expiresAt?.let { "Vence: ${formatDateTime(it)}" } ?: "Sin vencimiento: no se programa aviso",
+            state.expiresAt?.let { "Vence: ${formatDateTime(it)}. Te avisamos antes y al vencer." }
+                ?: "Sin vencimiento: no se programa aviso",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 

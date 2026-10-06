@@ -21,7 +21,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Imágenes | JPEG comprimido dentro de Firestore (sin Storage: no requiere plan Blaze) |
 | Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient |
 | Sensores | Magnetómetro + acelerómetro |
-| Notificaciones | Locales, con AlarmManager |
+| Notificaciones | Locales con AlarmManager (exactas, con respaldo inexacto), reprogramadas al reiniciar |
 | Agente de IA | Firebase AI Logic (Gemini) |
 
 ## Cómo ejecutarlo
@@ -42,6 +42,10 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
    `firebase deploy --only firestore:rules`.
 7. Ejecutar la configuración `app` en un emulador o teléfono con Android 8.0 (API 26) o superior.
 
+> Avisos: en Android 13+ la app pide permiso de notificaciones; en Android 12+ conviene permitir
+> "Alarmas y recordatorios" (Perfil → Activar) para que el aviso llegue en el minuto exacto.
+> Perfil tiene un botón para enviar un aviso de prueba.
+
 > Para la brújula conviene un teléfono físico: los emuladores no siempre simulan el magnetómetro.
 
 ## Estructura
@@ -51,6 +55,7 @@ app/src/main/java/com/example/balizapp/
 ├─ auth/          Login, registro, verificación (repositorio + ViewModel + pantallas)
 ├─ data/          Repositorios de Firestore y modelos (data/model)
 ├─ navigation/    Rutas tipadas, NavHost y barra inferior
+├─ notifications/ Alarmas y notificaciones de vencimiento
 ├─ ui/screens/    Una pantalla por archivo
 ├─ ui/components/ Piezas de UI reutilizables
 └─ ui/theme/      Colores, tipografía y tema
@@ -67,7 +72,7 @@ firestore.rules   Reglas de Firestore (incluye las fotos)
 | 3 | Lista, alta y edición, detalle (RF2–RF4) | Hecha |
 | 4 | Ubicación y mapa (RF5) | Hecha |
 | 5 | Cámara y fotos (RF6) | Hecha |
-| 6 | Avisos de vencimiento (RF7) | Pendiente |
+| 6 | Avisos de vencimiento (RF7) | Hecha |
 | 7 | Volver al auto: brújula y distancia | Pendiente |
 | 8 | Agente de IA | Pendiente |
 | 9 | Cache offline con Room (opcional) | Pendiente |
