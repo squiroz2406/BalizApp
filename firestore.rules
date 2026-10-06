@@ -18,6 +18,15 @@ service cloud.firestore {
         allow create, update: if isOwner(uid)
           && request.resource.data.status in ['active', 'finished']
           && request.resource.data.startedAt is timestamp;
+
+        // Fotos del lugar y del cartel: JPEG comprimido (bytes) de menos de 900 KB.
+        match /photos/{kind} {
+          allow read, delete: if isOwner(uid);
+          allow create, update: if isOwner(uid)
+            && kind in ['place', 'sign']
+            && request.resource.data.data is bytes
+            && request.resource.data.data.size() < 900 * 1024;
+        }
       }
     }
 

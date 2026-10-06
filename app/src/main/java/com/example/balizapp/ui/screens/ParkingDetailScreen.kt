@@ -1,5 +1,14 @@
 package com.example.balizapp.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import com.example.balizapp.data.PhotoKind
+import com.example.balizapp.ui.components.PhotoViewer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,7 +51,7 @@ import com.example.balizapp.ui.components.formatRemaining
 import com.example.balizapp.ui.components.rememberNow
 import com.example.balizapp.ui.components.toMillis
 
-/** Detalle (RF3): toda la información de un registro, su mapa y sus acciones. Fotos: etapa 5. */
+/** Detalle (RF3): toda la información de un registro, su mapa, sus fotos y sus acciones. */
 @Composable
 fun ParkingDetailScreen(
     vm: ParkingDetailViewModel,
@@ -89,6 +98,7 @@ fun ParkingDetailScreen(
                             markerTitle = state.vehicle?.alias,
                         )
                     }
+                    if (state.photos.isNotEmpty()) PhotosRow(state.photos)
                     HorizontalDivider()
                     parking.addressText?.let { InfoRow("Dirección", it) }
                     InfoRow("Desde", formatDateTime(parking.startedAt))
@@ -173,6 +183,39 @@ private fun TimeCard(parking: Parking) {
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         }
     }
+}
+
+/** Miniaturas de las fotos (RF6); al tocarlas se ven en pantalla completa. */
+@Composable
+private fun PhotosRow(photos: Map<PhotoKind, ImageBitmap>) {
+    var viewing by remember { mutableStateOf<PhotoKind?>(null) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PhotoKind.entries.forEach { kind ->
+            photos[kind]?.let { bitmap ->
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = kind.label(),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { viewing = kind },
+                    )
+                    Text(kind.label(), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+    viewing?.let { kind ->
+        photos[kind]?.let { PhotoViewer(it, kind.label()) { viewing = null } }
+    }
+}
+
+private fun PhotoKind.label() = when (this) {
+    PhotoKind.PLACE -> "Foto del lugar"
+    PhotoKind.SIGN -> "Foto del cartel"
 }
 
 @Composable

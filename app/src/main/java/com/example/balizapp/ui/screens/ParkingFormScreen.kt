@@ -40,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.balizapp.ui.components.ParkingMiniMap
+import com.example.balizapp.ui.components.PhotoSlot
+import com.example.balizapp.data.PhotoKind
 import com.example.balizapp.ui.components.ScreenScaffold
 import com.example.balizapp.ui.components.rememberLocationPermissionRequest
 import com.example.balizapp.ui.components.MapPoint
@@ -49,7 +51,7 @@ import java.time.LocalTime
 import kotlin.math.roundToInt
 
 /**
- * Nuevo / editar estacionamiento (RF4). Ubicación (etapa 4) y fotos (etapa 5) se suman después.
+ * Nuevo / editar estacionamiento (RF4): ubicación (RF5) y fotos del lugar y del cartel (RF6).
  * [onSaved] recibe el id guardado y si era una edición.
  */
 @Composable
@@ -134,6 +136,22 @@ private fun ColumnScope.FormContent(
         }
 
         LocationSection(state, vm, onRequestLocationPermission)
+
+        FieldLabel("Fotos")
+        PhotoSlot(
+            label = "Foto del lugar",
+            bitmap = state.placePhoto?.bitmap,
+            processing = state.processingPhoto == PhotoKind.PLACE,
+            onPicked = { vm.onPhotoPicked(PhotoKind.PLACE, it) },
+            onRemove = { vm.removePhoto(PhotoKind.PLACE) },
+        )
+        PhotoSlot(
+            label = "Foto del cartel",
+            bitmap = state.signPhoto?.bitmap,
+            processing = state.processingPhoto == PhotoKind.SIGN,
+            onPicked = { vm.onPhotoPicked(PhotoKind.SIGN, it) },
+            onRemove = { vm.removePhoto(PhotoKind.SIGN) },
+        )
 
         FieldLabel("Vehículo")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

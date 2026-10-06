@@ -23,6 +23,7 @@ class ActiveParkingExistsException : IllegalStateException("Ese vehículo ya tie
 class ParkingRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val photos: PhotoRepository = PhotoRepository(auth, db),
 ) {
     private fun parkings(uid: String) = db.collection("users").document(uid).collection("parkings")
 
@@ -100,7 +101,16 @@ class ParkingRepository(
         ).awaitOrPending()
     }
 
+    /** Guarda las rutas de las fotos (null = sin foto). */
+    suspend fun setPhotoPaths(id: String, placePhotoPath: String?, signPhotoPath: String?) {
+        parkings(requireUid()).document(id).update(
+            mapOf("placePhotoUrl" to placePhotoPath, "signPhotoUrl" to signPhotoPath)
+        ).awaitOrPending()
+    }
+
+    /** Borra el estacionamiento y sus fotos (Firestore no borra subcolecciones solo). */
     suspend fun delete(id: String) {
+        photos.deleteAll(id)
         parkings(requireUid()).document(id).delete().awaitOrPending()
     }
 

@@ -18,7 +18,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Arquitectura | MVVM + repositorios, StateFlow |
 | Autenticación | Firebase Authentication (email y contraseña, Google) |
 | Base de datos | Cloud Firestore |
-| Imágenes | Firebase Storage (requiere plan Blaze) |
+| Imágenes | JPEG comprimido dentro de Firestore (sin Storage: no requiere plan Blaze) |
 | Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient |
 | Sensores | Magnetómetro + acelerómetro |
 | Notificaciones | Locales, con AlarmManager |
@@ -37,9 +37,9 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 4. **Mapas:** se usa OpenStreetMap (biblioteca osmdroid), que no necesita clave de API ni cuenta de facturación.
 5. En la consola de Firebase, activar:
    - Authentication → proveedores **Correo electrónico/contraseña** y **Google**.
-   - **Firestore Database** y **Storage** (Storage pide el plan Blaze; dentro de la cuota gratuita no tiene costo).
-6. Publicar las reglas de seguridad: copiar `firestore.rules` y `storage.rules` en la consola, o con Firebase CLI:
-   `firebase deploy --only firestore:rules,storage`.
+   - **Firestore Database**. No hace falta Storage ni el plan Blaze: las fotos se guardan comprimidas en Firestore.
+6. Publicar las reglas de seguridad: copiar `firestore.rules` en Firestore → Reglas, o con Firebase CLI:
+   `firebase deploy --only firestore:rules`.
 7. Ejecutar la configuración `app` en un emulador o teléfono con Android 8.0 (API 26) o superior.
 
 > Para la brújula conviene un teléfono físico: los emuladores no siempre simulan el magnetómetro.
@@ -54,8 +54,7 @@ app/src/main/java/com/example/balizapp/
 ├─ ui/screens/    Una pantalla por archivo
 ├─ ui/components/ Piezas de UI reutilizables
 └─ ui/theme/      Colores, tipografía y tema
-firestore.rules   Reglas de Firestore
-storage.rules     Reglas de Storage
+firestore.rules   Reglas de Firestore (incluye las fotos)
 ```
 
 ## Estado
@@ -67,7 +66,7 @@ storage.rules     Reglas de Storage
 | 2 | Firestore: modelos, repositorios, vehículos y ajustes | Hecha |
 | 3 | Lista, alta y edición, detalle (RF2–RF4) | Hecha |
 | 4 | Ubicación y mapa (RF5) | Hecha |
-| 5 | Cámara y fotos (RF6) | Pendiente |
+| 5 | Cámara y fotos (RF6) | Hecha |
 | 6 | Avisos de vencimiento (RF7) | Pendiente |
 | 7 | Volver al auto: brújula y distancia | Pendiente |
 | 8 | Agente de IA | Pendiente |

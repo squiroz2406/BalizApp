@@ -1,6 +1,7 @@
 package com.example.balizapp.ui.screens
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -8,14 +9,19 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.balizapp.data.ActiveParkingExistsException
 import com.example.balizapp.data.GeoPosition
+import com.example.balizapp.data.ImageCompressor
 import com.example.balizapp.data.LocationRepository
 import com.example.balizapp.data.ParkingRepository
+import com.example.balizapp.data.PhotoKind
+import com.example.balizapp.data.PhotoRepository
 import com.example.balizapp.data.VehicleRepository
 import com.example.balizapp.data.model.Parking
 import com.example.balizapp.data.model.ParkingSource
 import com.example.balizapp.data.model.Vehicle
 import com.example.balizapp.navigation.ParkingFormRoute
+import com.example.balizapp.ui.components.toImageBitmap
 import com.example.balizapp.ui.components.toMillis
+import androidx.compose.ui.graphics.ImageBitmap
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.GeoPoint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +34,12 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
+
+/**
+ * Una foto del formulario: los bytes JPEG ya comprimidos y su imagen para mostrar.
+ * Clase común (no data class) para no comparar arreglos de bytes en cada actualización.
+ */
+class FormPhoto(val jpeg: ByteArray, val bitmap: ImageBitmap)
 
 /** De dónde salió la ubicación que muestra el formulario. */
 enum class PositionSource { NONE, GPS, MANUAL, SAVED }
@@ -46,6 +58,12 @@ data class ParkingFormState(
     val addressText: String? = null,
     val locating: Boolean = false,
     val hasLocationPermission: Boolean = false,
+    /** Fotos (RF6). changed = hay que guardar (o borrar) la foto al confirmar. */
+    val placePhoto: FormPhoto? = null,
+    val signPhoto: FormPhoto? = null,
+    val placePhotoChanged: Boolean = false,
+    val signPhotoChanged: Boolean = false,
+    val processingPhoto: PhotoKind? = null,
     /** Vencimiento en milisegundos; null = sin límite. */
     val expiresAt: Long? = null,
     /** Chip de límite marcado: minutos del preset, NO_LIMIT o null si se eligió una hora. */
@@ -69,6 +87,7 @@ class ParkingFormViewModel(
     private val parkingRepo = ParkingRepository()
     private val vehicleRepo = VehicleRepository()
     private val locationRepo = LocationRepository(app)
+    private val photoRepo = PhotoRepository()
 
     private val parkingId: String? = savedStateHandle.toRoute<ParkingFormRoute>().parkingId
     /** Registro original al editar; se copia para no perder ubicación, fotos, origen, etc. */
@@ -121,6 +140,8 @@ class ParkingFormViewModel(
                         selectedPreset = if (parking.expiresAt == null) ParkingFormState.NO_LIMIT else null,
                     )
                 }
+                if (parking.placePhotoPath != null) loadPhoto(id, PhotoKind.PLACE)
+                if (parking.signPhotoPath != null) loadPhoto(id, PhotoKind.SIGN)
             } catch (e: Exception) {
                 Log.w(TAG, "No se pudo cargar $id", e)
                 _state.update { it.copy(loading = false, error = e.message ?: "No se pudo cargar") }
@@ -170,6 +191,56 @@ class ParkingFormViewModel(
         }
     }
 
+    private fun loadPhoto(parkingId: String, kind: PhotoKind) {
+        viewModelScope.launch {
+            _state.update { it.copy(processingPhoto = kind) }
+            val photo = runCatching { photoRepo.load(parkingId, kind) }
+                .onFailure { Log.w(TAG, "No se pudo cargar la foto $kind", it) }
+                .getOrNull()
+                ?.let { bytes -> bytes.toImageBitmap()?.let { FormPhoto(bytes, it) } }
+            _state.update { it.withPhoto(kind, photo, changed = false).copy(processingPhoto = null) }
+        }
+    }
+
+    /** Foto sacada con la cámara o elegida de la galería: se comprime antes de mostrarla. */
+    fun onPhotoPicked(kind: PhotoKind, uri: Uri) {
+        viewModelScope.launch {
+            _state.update { it.copy(processingPhoto = kind, error = null) }
+            try {
+                val jpeg = ImageCompressor.compress(getApplication<Application>(), uri)
+                val bitmap = jpeg.toImageBitmap() ?: error("No se pudo mostrar la foto")
+                _state.update { it.withPhoto(kind, FormPhoto(jpeg, bitmap), changed = true).copy(processingPhoto = null) }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error procesando la foto", e)
+                _state.update { it.copy(processingPhoto = null, error = "No se pudo usar la foto: ${e.message}") }
+            }
+        }
+    }
+
+    fun removePhoto(kind: PhotoKind) = _state.update { it.withPhoto(kind, null, changed = true) }
+
+    private fun ParkingFormState.withPhoto(kind: PhotoKind, photo: FormPhoto?, changed: Boolean) = when (kind) {
+        PhotoKind.PLACE -> copy(placePhoto = photo, placePhotoChanged = changed || placePhotoChanged)
+        PhotoKind.SIGN -> copy(signPhoto = photo, signPhotoChanged = changed || signPhotoChanged)
+    }
+
+    /** Guarda o borra cada foto que cambió y devuelve las rutas finales. */
+    private suspend fun savePhotos(parkingId: String, s: ParkingFormState, base: Parking?) {
+        suspend fun resolve(kind: PhotoKind, photo: FormPhoto?, changed: Boolean, existing: String?): String? =
+            when {
+                !changed -> existing
+                photo != null -> photoRepo.save(parkingId, kind, photo.jpeg)
+                else -> {
+                    if (existing != null) photoRepo.delete(parkingId, kind)
+                    null
+                }
+            }
+        if (!s.placePhotoChanged && !s.signPhotoChanged) return
+        val place = resolve(PhotoKind.PLACE, s.placePhoto, s.placePhotoChanged, base?.placePhotoPath)
+        val sign = resolve(PhotoKind.SIGN, s.signPhoto, s.signPhotoChanged, base?.signPhotoPath)
+        parkingRepo.setPhotoPaths(parkingId, place, sign)
+    }
+
     fun selectVehicle(id: String) = _state.update { it.copy(vehicleId = id, error = null) }
     fun setNote(value: String) = _state.update { it.copy(note = value) }
     fun setLevelSector(value: String) = _state.update { it.copy(levelSector = value) }
@@ -202,6 +273,7 @@ class ParkingFormViewModel(
     fun save() {
         val s = _state.value
         if (s.saving) return
+        if (s.processingPhoto != null) return fail("Esperá a que termine de procesarse la foto")
         val vehicleId = s.vehicleId ?: return fail("Elegí un vehículo")
         val position = s.position ?: return fail("Marcá en el mapa dónde dejaste el vehículo")
         val geoPoint = GeoPoint(position.latitude, position.longitude)
@@ -245,6 +317,7 @@ class ParkingFormViewModel(
                     )
                     base.id
                 }
+                savePhotos(id, s, base)
                 _state.update { it.copy(saving = false, savedId = id) }
             } catch (e: ActiveParkingExistsException) {
                 _state.update { it.copy(saving = false, error = e.message) }

@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.play.services.location)
     implementation(libs.osmdroid.android)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.credentials)
