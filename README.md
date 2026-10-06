@@ -8,7 +8,6 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 
 - Sofía Quiroz
 - David Bourlot
-- _(completar)_
 
 ## Tecnologías
 
@@ -65,7 +64,7 @@ storage.rules     Reglas de Storage
 | 0 | Orden del repositorio, reglas y README | Hecha |
 | 1 | Navegación, barra inferior, pantallas base y tema | Hecha |
 | 2 | Firestore: modelos, repositorios, vehículos y ajustes | Hecha |
-| 3 | Lista, alta y edición, detalle (RF2–RF4) | Pendiente |
+| 3 | Lista, alta y edición, detalle (RF2–RF4) | Hecha |
 | 4 | Ubicación y mapa (RF5) | Pendiente |
 | 5 | Cámara y fotos (RF6) | Pendiente |
 | 6 | Avisos de vencimiento (RF7) | Pendiente |

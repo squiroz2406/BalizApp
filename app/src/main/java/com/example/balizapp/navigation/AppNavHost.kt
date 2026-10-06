@@ -27,9 +27,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.balizapp.ui.screens.HomeScreen
+import com.example.balizapp.ui.screens.HomeViewModel
 import com.example.balizapp.ui.screens.MapScreen
 import com.example.balizapp.ui.screens.ParkingDetailScreen
+import com.example.balizapp.ui.screens.ParkingDetailViewModel
 import com.example.balizapp.ui.screens.ParkingFormScreen
+import com.example.balizapp.ui.screens.ParkingFormViewModel
 import com.example.balizapp.ui.screens.ProfileScreen
 import com.example.balizapp.ui.screens.ProfileViewModel
 import com.example.balizapp.ui.screens.ReturnToCarScreen
@@ -93,6 +96,7 @@ fun AppNavHost(
         ) {
             composable<HomeRoute> {
                 HomeScreen(
+                    vm = viewModel<HomeViewModel>(),
                     onParkHere = { navController.navigate(ParkingFormRoute()) },
                     onOpenParking = { id -> navController.navigate(ParkingDetailRoute(id)) },
                 )
@@ -106,19 +110,28 @@ fun AppNavHost(
                     onSignOut = onSignOut,
                 )
             }
-            composable<ParkingFormRoute> { entry ->
-                val route = entry.toRoute<ParkingFormRoute>()
+            composable<ParkingFormRoute> {
                 ParkingFormScreen(
-                    parkingId = route.parkingId,
+                    vm = viewModel<ParkingFormViewModel>(),
                     onBack = { navController.popBackStack() },
                     onOpenAssistant = { navController.navigate(SignAssistantRoute) },
-                    onSaved = { navController.popBackStack() },
+                    onGoToProfile = { navController.navigateToTopLevel(ProfileRoute) },
+                    onSaved = { id, wasEdit ->
+                        if (wasEdit) {
+                            navController.popBackStack()
+                        } else {
+                            // Al crear, se reemplaza el formulario por el detalle del nuevo registro.
+                            navController.navigate(ParkingDetailRoute(id)) {
+                                popUpTo<HomeRoute>()
+                            }
+                        }
+                    },
                 )
             }
             composable<ParkingDetailRoute> { entry ->
                 val route = entry.toRoute<ParkingDetailRoute>()
                 ParkingDetailScreen(
-                    parkingId = route.parkingId,
+                    vm = viewModel<ParkingDetailViewModel>(),
                     onBack = { navController.popBackStack() },
                     onReturnToCar = { navController.navigate(ReturnToCarRoute(route.parkingId)) },
                     onEdit = { navController.navigate(ParkingFormRoute(route.parkingId)) },

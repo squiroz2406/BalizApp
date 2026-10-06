@@ -3,6 +3,7 @@ package com.example.balizapp.ui.screens
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.balizapp.data.ParkingRepository
 import com.example.balizapp.data.UserRepository
 import com.example.balizapp.data.VehicleRepository
 import com.example.balizapp.data.model.UserProfile
@@ -26,6 +27,7 @@ data class ProfileUiState(
 class ProfileViewModel(
     private val users: UserRepository = UserRepository(),
     private val vehicleRepo: VehicleRepository = VehicleRepository(),
+    private val parkingRepo: ParkingRepository = ParkingRepository(),
 ) : ViewModel() {
 
     private val error = MutableStateFlow<String?>(null)
@@ -52,8 +54,13 @@ class ProfileViewModel(
         return null
     }
 
-    // TODO(etapa 3): impedir borrar un vehículo con un estacionamiento activo.
-    fun deleteVehicle(id: String) = launchWrite { vehicleRepo.delete(id) }
+    fun deleteVehicle(id: String) = launchWrite {
+        if (parkingRepo.hasActiveParking(id)) {
+            error.update { "Ese vehículo tiene un estacionamiento activo. Retiralo antes de borrarlo." }
+        } else {
+            vehicleRepo.delete(id)
+        }
+    }
 
     /*
      * Firestore aplica la escritura en el cache local al instante y la pantalla se actualiza
