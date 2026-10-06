@@ -1,0 +1,74 @@
+# BalizApp
+
+App Android nativa que guarda dónde dejaste tu auto o moto, controla cuánto tiempo podés estar ahí y te guía a pie de vuelta al vehículo. Un agente de IA lee la foto del cartel de la calle y propone el vencimiento y el aviso, que el usuario confirma antes de guardar.
+
+Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ.
+
+## Grupo
+
+- Sofía Quiroz
+- David Bourlot
+- _(completar)_
+
+## Tecnologías
+
+| Área | Tecnología |
+| --- | --- |
+| Lenguaje y UI | Kotlin, Jetpack Compose, Material 3 |
+| Navegación | Navigation Compose con rutas tipadas |
+| Arquitectura | MVVM + repositorios, StateFlow |
+| Autenticación | Firebase Authentication (email y contraseña, Google) |
+| Base de datos | Cloud Firestore |
+| Imágenes | Firebase Storage (requiere plan Blaze) |
+| Mapa y ubicación | Maps Compose, FusedLocationProviderClient |
+| Sensores | Magnetómetro + acelerómetro |
+| Notificaciones | Locales, con AlarmManager |
+| Agente de IA | Firebase AI Logic (Gemini) |
+
+## Cómo ejecutarlo
+
+1. Clonar el repositorio y abrirlo con una versión reciente de Android Studio (el proyecto usa AGP 9).
+2. **`google-services.json`** no está en el repositorio. Descargarlo desde la consola de Firebase
+   (Configuración del proyecto → Tus apps → Android `com.example.balizapp`) y copiarlo en `app/`.
+3. **Ingreso con Google:** el build de depuración firma con `app/debug-team.keystore`, una clave compartida por
+   todo el grupo, así la huella es la misma en cualquier computadora. Su SHA-1 tiene que estar registrada una vez en
+   la consola de Firebase (Configuración del proyecto → Tus apps → Android → Agregar huella digital):
+   `F5:DE:06:5D:E0:BE:97:2E:04:EE:C9:5C:1A:66:71:9F:03:07:20:BD`.
+   Se puede verificar con `./gradlew signingReport` (variante `debug`).
+4. En la consola de Firebase, activar:
+   - Authentication → proveedores **Correo electrónico/contraseña** y **Google**.
+   - **Firestore Database** y **Storage** (Storage pide el plan Blaze; dentro de la cuota gratuita no tiene costo).
+5. Publicar las reglas de seguridad: copiar `firestore.rules` y `storage.rules` en la consola, o con Firebase CLI:
+   `firebase deploy --only firestore:rules,storage`.
+6. Ejecutar la configuración `app` en un emulador o teléfono con Android 8.0 (API 26) o superior.
+
+> Para la brújula conviene un teléfono físico: los emuladores no siempre simulan el magnetómetro.
+
+## Estructura
+
+```
+app/src/main/java/com/example/balizapp/
+├─ auth/          Login, registro, verificación (repositorio + ViewModel + pantallas)
+├─ data/          Repositorios de Firestore y modelos (data/model)
+├─ navigation/    Rutas tipadas, NavHost y barra inferior
+├─ ui/screens/    Una pantalla por archivo
+├─ ui/components/ Piezas de UI reutilizables
+└─ ui/theme/      Colores, tipografía y tema
+firestore.rules   Reglas de Firestore
+storage.rules     Reglas de Storage
+```
+
+## Estado
+
+| Etapa | Contenido | Estado |
+| --- | --- | --- |
+| 0 | Orden del repositorio, reglas y README | Hecha |
+| 1 | Navegación, barra inferior, pantallas base y tema | Hecha |
+| 2 | Firestore: modelos, repositorios, vehículos y ajustes | Hecha |
+| 3 | Lista, alta y edición, detalle (RF2–RF4) | Pendiente |
+| 4 | Ubicación y mapa (RF5) | Pendiente |
+| 5 | Cámara y fotos (RF6) | Pendiente |
+| 6 | Avisos de vencimiento (RF7) | Pendiente |
+| 7 | Volver al auto: brújula y distancia | Pendiente |
+| 8 | Agente de IA | Pendiente |
+| 9 | Cache offline con Room (opcional) | Pendiente |

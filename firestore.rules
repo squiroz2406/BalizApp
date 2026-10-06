@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /vehicles/{vehicleId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /parkings/{parkingId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.status in ['active', 'finished']
+          && request.resource.data.startedAt is timestamp;
+      }
+    }
+
+    // Cualquier otra ruta queda denegada
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

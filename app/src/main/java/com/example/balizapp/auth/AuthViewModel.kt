@@ -2,7 +2,11 @@ package com.example.balizapp.auth
 
 import android.app.Application
 import android.util.Patterns
+import android.util.Log
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import com.example.balizapp.data.UserRepository
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseNetworkException
@@ -30,6 +34,7 @@ data class AuthUiState(
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = AuthRepository()
+    private val users = UserRepository()
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
@@ -50,6 +55,13 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 userName = user?.displayName,
                 userEmail = user?.email,
             )
+        }
+        // Crea users/{uid} la primera vez que entra (o actualiza nombre y correo).
+        if (_state.value.status == AuthStatus.SignedIn) {
+            viewModelScope.launch {
+                runCatching { users.ensureProfile() }
+                    .onFailure { Log.w(TAG, "No se pudo crear el perfil en Firestore", it) }
+            }
         }
     }
 
@@ -105,6 +117,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: GetCredentialCancellationException) {
                 _state.update { it.copy(busy = false) }
             } catch (e: Exception) {
+                Log.w(TAG, "Error de autenticación", e)
                 _state.update { it.copy(busy = false, error = messageFor(e)) }
             }
         }
@@ -118,6 +131,10 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         else -> null
     }
 
+    private companion object {
+        const val TAG = "AuthViewModel"
+    }
+
     private fun messageFor(e: Exception): String = when {
         e.message == "verification-pending" -> "Todavía no verificaste tu correo"
         e is FirebaseAuthWeakPasswordException -> "La contraseña es demasiado débil"
@@ -125,6 +142,10 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         e is FirebaseAuthInvalidUserException -> "No existe una cuenta con ese correo"
         e is FirebaseAuthInvalidCredentialsException -> "Correo o contraseña incorrectos"
         e is FirebaseNetworkException -> "Sin conexión. Revisá tu internet"
+        e is NoCredentialException ->
+            "No hay una cuenta de Google disponible. Agregá una en Ajustes del teléfono; " +
+                "si ya hay una, falta registrar la huella SHA-1 de la app en Firebase"
+        e is GetCredentialException -> "No se pudo iniciar sesión con Google: ${e.errorMessage ?: e.type}"
         e is FirebaseAuthException -> "Error de autenticación (${e.errorCode})"
         else -> e.message ?: "Ocurrió un error inesperado"
     }
