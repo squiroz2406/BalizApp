@@ -3,6 +3,7 @@ package com.example.balizapp.ui.components
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.DashPathEffect
 import android.graphics.drawable.Drawable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,12 +31,14 @@ import com.example.balizapp.data.hasLocationPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
@@ -88,6 +91,8 @@ fun rememberLocationPermissionRequest(onResult: (granted: Boolean) -> Unit): () 
  *   mismo punto (por ejemplo, después de que el usuario movió el mapa), se incrementa [centerRequest].
  * - [interactive] = false: mapa estático (sin gestos), para el detalle.
  * - [showMyLocation]: punto azul con tu posición (requiere permiso).
+ * - [line]: línea recta entre puntos (por ejemplo, de tu posición al auto).
+ * - [fitPoints]: encuadra todos esos puntos; se aplica cuando cambia [fitRequest].
  */
 @Composable
 fun OsmMap(
@@ -100,6 +105,10 @@ fun OsmMap(
     showMyLocation: Boolean = false,
     onMapClick: ((MapPoint) -> Unit)? = null,
     onMarkerClick: ((String) -> Unit)? = null,
+    line: List<MapPoint> = emptyList(),
+    lineColor: Color = Color(0xFF1E88E5),
+    fitPoints: List<MapPoint> = emptyList(),
+    fitRequest: Int = 0,
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -191,6 +200,28 @@ fun OsmMap(
                 holder.lastMarkers = markers
             }
 
+            // Línea (se reemplaza si cambian los puntos).
+            if (line != holder.lastLine) {
+                holder.polyline?.let { map.overlays.remove(it) }
+                holder.polyline = if (line.size >= 2) {
+                    Polyline(map).apply {
+                        setPoints(line.map { GeoPoint(it.latitude, it.longitude) })
+                        outlinePaint.color = lineColor.toArgb()
+                        outlinePaint.strokeWidth = 10f
+                        outlinePaint.pathEffect = DashPathEffect(floatArrayOf(30f, 20f), 0f)
+                        setOnClickListener { _, _, _ -> false }
+                    }.also { map.overlays.add(1, it) } // debajo de los marcadores
+                } else null
+                holder.lastLine = line
+            }
+
+            // Encuadre de varios puntos (después del primer dibujado, cuando el mapa ya tiene tamaño).
+            if (fitPoints.size >= 2 && fitRequest != holder.lastFitRequest) {
+                holder.lastFitRequest = fitRequest
+                val box = BoundingBox.fromGeoPointsSafe(fitPoints.map { GeoPoint(it.latitude, it.longitude) })
+                map.post { map.zoomToBoundingBox(box.increaseByScale(1.4f), true, 80) }
+            }
+
             updateMyLocation(map, holder, showMyLocation)
             map.invalidate()
         },
@@ -225,6 +256,9 @@ private class MapHolder {
     var lastRequest: Int = 0
     var lastMarkers: List<MapMarker>? = null
     var myLocation: MyLocationNewOverlay? = null
+    var lastLine: List<MapPoint>? = null
+    var polyline: Polyline? = null
+    var lastFitRequest: Int = 0
 }
 
 @SuppressLint("MissingPermission") // se verifica hasLocationPermission() antes de activar

@@ -7,12 +7,19 @@ import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -51,6 +58,34 @@ class LocationRepository(context: Context) {
         } finally {
             cancellation.cancel()
         }
+    }
+
+    /**
+     * Posición en tiempo real mientras alguien observa (pantalla "Volver al auto").
+     * Al dejar de observar se cancelan las actualizaciones para no gastar batería.
+     */
+    @SuppressLint("MissingPermission") // se verifica con hasPermission()
+    fun positionUpdates(intervalMs: Long = 2_000): Flow<GeoPosition> = callbackFlow {
+        if (!hasPermission()) {
+            close()
+            return@callbackFlow
+        }
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
+            .setMinUpdateIntervalMillis(intervalMs / 2)
+            .build()
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.lastLocation?.let {
+                    trySend(GeoPosition(it.latitude, it.longitude, if (it.hasAccuracy()) it.accuracy else null))
+                }
+            }
+        }
+        client.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        // Mientras llega la primera lectura, se usa la última conocida.
+        client.lastLocation.addOnSuccessListener { last ->
+            last?.let { trySend(GeoPosition(it.latitude, it.longitude, if (it.hasAccuracy()) it.accuracy else null)) }
+        }
+        awaitClose { client.removeLocationUpdates(callback) }
     }
 
     /** Dirección legible ("Av. Calchaquí 6200, Florencio Varela") o null si no se pudo resolver. */

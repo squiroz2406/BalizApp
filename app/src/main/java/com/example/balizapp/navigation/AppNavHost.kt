@@ -38,6 +38,7 @@ import com.example.balizapp.ui.screens.ParkingFormViewModel
 import com.example.balizapp.ui.screens.ProfileScreen
 import com.example.balizapp.ui.screens.ProfileViewModel
 import com.example.balizapp.ui.screens.ReturnToCarScreen
+import com.example.balizapp.ui.screens.ReturnToCarViewModel
 import com.example.balizapp.ui.screens.SignAssistantScreen
 import kotlin.reflect.KClass
 
@@ -154,9 +155,13 @@ fun AppNavHost(
                     onEdit = { navController.navigate(ParkingFormRoute(route.parkingId)) },
                 )
             }
-            composable<ReturnToCarRoute> { entry ->
-                val route = entry.toRoute<ReturnToCarRoute>()
-                ReturnToCarScreen(parkingId = route.parkingId, onBack = { navController.popBackStack() })
+            composable<ReturnToCarRoute> {
+                ReturnToCarScreen(
+                    vm = viewModel<ReturnToCarViewModel>(),
+                    onBack = { navController.popBackStack() },
+                    // "Ya lo retiré": vuelve a Inicio, donde el registro ya aparece en el historial.
+                    onFinished = { navController.popBackStack<HomeRoute>(inclusive = false) },
+                )
             }
             composable<SignAssistantRoute> {
                 SignAssistantScreen(onBack = { navController.popBackStack() })
