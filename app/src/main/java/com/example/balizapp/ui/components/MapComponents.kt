@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.DashPathEffect
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -107,6 +108,8 @@ fun OsmMap(
     onMarkerClick: ((String) -> Unit)? = null,
     line: List<MapPoint> = emptyList(),
     lineColor: Color = Color(0xFF1E88E5),
+    /** Punteada = línea recta aproximada; continua = recorrido real por calles. */
+    lineDashed: Boolean = true,
     fitPoints: List<MapPoint> = emptyList(),
     fitRequest: Int = 0,
 ) {
@@ -201,18 +204,21 @@ fun OsmMap(
             }
 
             // Línea (se reemplaza si cambian los puntos).
-            if (line != holder.lastLine) {
+            if (line != holder.lastLine || lineDashed != holder.lastLineDashed) {
                 holder.polyline?.let { map.overlays.remove(it) }
                 holder.polyline = if (line.size >= 2) {
                     Polyline(map).apply {
                         setPoints(line.map { GeoPoint(it.latitude, it.longitude) })
                         outlinePaint.color = lineColor.toArgb()
-                        outlinePaint.strokeWidth = 10f
-                        outlinePaint.pathEffect = DashPathEffect(floatArrayOf(30f, 20f), 0f)
+                        outlinePaint.strokeWidth = if (lineDashed) 10f else 14f
+                        outlinePaint.strokeCap = Paint.Cap.ROUND
+                        outlinePaint.strokeJoin = Paint.Join.ROUND
+                        outlinePaint.pathEffect = if (lineDashed) DashPathEffect(floatArrayOf(30f, 20f), 0f) else null
                         setOnClickListener { _, _, _ -> false }
                     }.also { map.overlays.add(1, it) } // debajo de los marcadores
                 } else null
                 holder.lastLine = line
+                holder.lastLineDashed = lineDashed
             }
 
             // Encuadre de varios puntos (después del primer dibujado, cuando el mapa ya tiene tamaño).
@@ -257,6 +263,7 @@ private class MapHolder {
     var lastMarkers: List<MapMarker>? = null
     var myLocation: MyLocationNewOverlay? = null
     var lastLine: List<MapPoint>? = null
+    var lastLineDashed: Boolean = true
     var polyline: Polyline? = null
     var lastFitRequest: Int = 0
 }

@@ -19,7 +19,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Autenticación | Firebase Authentication (email y contraseña, Google) |
 | Base de datos | Cloud Firestore |
 | Imágenes | JPEG comprimido dentro de Firestore (sin Storage: no requiere plan Blaze) |
-| Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient |
+| Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient; rutas a pie con OSRM (servidor FOSSGIS, sin clave) |
 | Sensores | Magnetómetro + acelerómetro (brújula con filtro y corrección por declinación magnética) |
 | Notificaciones | Locales con AlarmManager (exactas, con respaldo inexacto), reprogramadas al reiniciar |
 | Agente de IA | Firebase AI Logic (Gemini) |
@@ -73,6 +73,6 @@ firestore.rules   Reglas de Firestore (incluye las fotos)
 | 4 | Ubicación y mapa (RF5) | Hecha |
 | 5 | Cámara y fotos (RF6) | Hecha |
 | 6 | Avisos de vencimiento (RF7) | Hecha |
-| 7 | Volver al auto: brújula y distancia | Hecha |
+| 7 | Volver al auto: brújula, distancia y recorrido por calles | Hecha |
 | 8 | Agente de IA | Pendiente |
 | 9 | Cache offline con Room (opcional) | Pendiente |

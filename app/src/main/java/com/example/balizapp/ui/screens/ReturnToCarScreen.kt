@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -90,8 +96,10 @@ fun ReturnToCarScreen(vm: ReturnToCarViewModel, onBack: () -> Unit, onFinished: 
                 text = "Puede que se haya borrado o que no tenga ubicación guardada.",
             )
             else -> {
-                GuidanceCard(state, onRequestPermission = requestPermission)
+                ModeSelector(state.mode, onSelect = vm::setMode)
+                GuidanceCard(state, onRequestPermission = requestPermission, onRecalculate = vm::recalculateRoute)
                 ReturnMap(state, car, Modifier.weight(1f))
+                if (state.mode == GuidanceMode.STREETS) RouteAttribution()
                 PlaceInfo(state)
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -109,7 +117,7 @@ fun ReturnToCarScreen(vm: ReturnToCarViewModel, onBack: () -> Unit, onFinished: 
 
 /** Flecha + distancia + indicaciones. */
 @Composable
-private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Unit) {
+private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Unit, onRecalculate: () -> Unit) {
     val arrived = state.arrived
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -125,7 +133,7 @@ private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Uni
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                val distance = state.distanceMeters
+                val distance = state.shownDistanceMeters
                 Text(
                     when {
                         !state.hasLocationPermission -> "Sin ubicación"
@@ -136,6 +144,7 @@ private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Uni
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                 )
+                if (state.mode == GuidanceMode.STREETS && !arrived) RouteSummary(state, onRecalculate)
                 Text(guidanceText(state), style = MaterialTheme.typography.bodyMedium)
                 state.myPosition?.accuracyMeters?.takeIf { it > 30f }?.let {
                     Text(
@@ -158,6 +167,10 @@ private fun guidanceText(state: ReturnToCarState): String {
         !state.hasLocationPermission -> "Permití la ubicación para calcular hacia dónde caminar."
         state.arrived -> "Estás a menos de ${ReturnToCarState.ARRIVED_METERS.roundToInt()} m del vehículo."
         bearing == null -> "Esperando el GPS…"
+        state.mode == GuidanceMode.STREETS && state.routeUi.route != null && state.compassAvailable && !state.compassUnreliable ->
+            "Seguí la flecha: apunta al próximo tramo del recorrido por calles."
+        state.mode == GuidanceMode.STREETS && state.routeUi.route != null && !state.compassAvailable ->
+            "Seguí la línea azul del mapa: es el recorrido por calles."
         !state.compassAvailable ->
             "Sin brújula en este teléfono: caminá hacia el ${cardinal(bearing)} (la flecha indica el rumbo con el norte arriba)."
         state.compassUnreliable -> "Calibrá la brújula moviendo el teléfono en forma de 8."
@@ -210,7 +223,69 @@ private fun CompassArrow(rotation: Float?, color: Color) {
     }
 }
 
-/** Mapa con el auto (naranja), tu posición y una línea punteada entre ambos. */
+/** Selector entre flecha directa al auto y recorrido por calles. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ModeSelector(mode: GuidanceMode, onSelect: (GuidanceMode) -> Unit) {
+    val options = listOf(GuidanceMode.DIRECT to "Directo", GuidanceMode.STREETS to "Por calles")
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (option, label) ->
+            SegmentedButton(
+                selected = mode == option,
+                onClick = { onSelect(option) },
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+            ) { Text(label) }
+        }
+    }
+}
+
+/** Distancia y tiempo por calles, estado del cálculo y botón para recalcular. */
+@Composable
+private fun RouteSummary(state: ReturnToCarState, onRecalculate: () -> Unit) {
+    val routeUi = state.routeUi
+    val route = routeUi.route
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            when {
+                route != null -> {
+                    val minutes = (route.durationSeconds / 60).roundToInt().coerceAtLeast(1)
+                    Text("por calles · unos $minutes min a pie", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    state.directDistanceMeters?.let {
+                        Text("En línea recta: ${formatDistance(it)}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                routeUi.loading -> Text("Calculando el recorrido por calles…", style = MaterialTheme.typography.bodySmall)
+            }
+            if (routeUi.loading && route != null) {
+                Text("Actualizando recorrido…", style = MaterialTheme.typography.bodySmall)
+            }
+            routeUi.error?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        if (!routeUi.loading && state.myPosition != null) {
+            TextButton(onClick = onRecalculate) { Text("Recalcular") }
+        }
+    }
+}
+
+/** Atribución que piden OpenStreetMap y el servidor de rutas (con enlace para corregir el mapa). */
+@Composable
+private fun RouteAttribution() {
+    val context = LocalContext.current
+    Text(
+        "Recorrido: OSRM (FOSSGIS) con datos de © OpenStreetMap · Corregir el mapa",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.clickable {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.openstreetmap.org/fixthemap")))
+            }
+        },
+    )
+}
+
+/** Mapa con el auto (naranja), tu posición y la ruta por calles (continua) o la línea directa (punteada). */
 @Composable
 private fun ReturnMap(state: ReturnToCarState, car: MapPoint, modifier: Modifier) {
     val me = state.myPosition?.let { MapPoint(it.latitude, it.longitude) }
@@ -223,6 +298,10 @@ private fun ReturnMap(state: ReturnToCarState, car: MapPoint, modifier: Modifier
             fitRequest++
         }
     }
+    val routePoints = remember(state.routePoints) { state.routePoints.map { MapPoint(it.latitude, it.longitude) } }
+    // Cuando llega una ruta nueva, se encuadra el recorrido completo.
+    LaunchedEffect(routePoints) { if (routePoints.size >= 2) fitRequest++ }
+    val showRoute = routePoints.size >= 2
     val markers = remember(car, state.vehicle) {
         listOf(MapMarker("car", car, state.vehicle?.alias, CarColor))
     }
@@ -233,8 +312,18 @@ private fun ReturnMap(state: ReturnToCarState, car: MapPoint, modifier: Modifier
         center = car,
         markers = markers,
         showMyLocation = state.hasLocationPermission,
-        line = if (me != null && !state.arrived) listOf(me, car) else emptyList(),
-        fitPoints = if (me != null) listOf(me, car) else emptyList(),
+        line = when {
+            state.arrived -> emptyList()
+            showRoute -> routePoints
+            me != null -> listOf(me, car)
+            else -> emptyList()
+        },
+        lineDashed = !showRoute,
+        fitPoints = when {
+            showRoute -> routePoints + car
+            me != null -> listOf(me, car)
+            else -> emptyList()
+        },
         fitRequest = fitRequest,
     )
 }
@@ -281,7 +370,7 @@ private fun WalkingRouteButton(car: MapPoint, modifier: Modifier) {
             }
         },
         modifier = modifier,
-    ) { Text("Ruta a pie") }
+    ) { Text("Abrir en Maps") }
 }
 
 private fun formatDistance(meters: Float): String =
