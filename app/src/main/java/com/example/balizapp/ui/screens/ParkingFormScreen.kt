@@ -2,6 +2,9 @@ package com.example.balizapp.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -32,13 +35,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.example.balizapp.ui.components.ParkingMiniMap
 import com.example.balizapp.ui.components.ScreenScaffold
+import com.example.balizapp.ui.components.rememberLocationPermissionRequest
+import com.example.balizapp.ui.components.MapPoint
 import com.example.balizapp.ui.components.formatDateTime
 import com.example.balizapp.ui.components.formatDuration
 import java.time.LocalTime
+import kotlin.math.roundToInt
 
 /**
  * Nuevo / editar estacionamiento (RF4). Ubicación (etapa 4) y fotos (etapa 5) se suman después.
@@ -54,6 +62,12 @@ fun ParkingFormScreen(
 ) {
     val state by vm.state.collectAsState()
     var showTimeDialog by remember { mutableStateOf(false) }
+    val requestLocationPermission = rememberLocationPermissionRequest(vm::onLocationPermissionResult)
+
+    // Al abrir un alta sin permiso, se pide una vez (la explicación queda visible en el formulario).
+    LaunchedEffect(Unit) {
+        if (!state.isEdit && !state.hasLocationPermission) requestLocationPermission()
+    }
 
     LaunchedEffect(state.savedId) {
         state.savedId?.let { onSaved(it, state.isEdit) }
@@ -66,7 +80,13 @@ fun ParkingFormScreen(
         when {
             state.loading -> CircularProgressIndicator(Modifier.padding(24.dp))
             state.vehicles.isEmpty() -> NoVehiclesCard(onGoToProfile)
-            else -> FormContent(state, vm, onOpenAssistant, onShowTimeDialog = { showTimeDialog = true })
+            else -> FormContent(
+                state = state,
+                vm = vm,
+                onOpenAssistant = onOpenAssistant,
+                onShowTimeDialog = { showTimeDialog = true },
+                onRequestLocationPermission = requestLocationPermission,
+            )
         }
     }
 
@@ -99,6 +119,7 @@ private fun ColumnScope.FormContent(
     vm: ParkingFormViewModel,
     onOpenAssistant: () -> Unit,
     onShowTimeDialog: () -> Unit,
+    onRequestLocationPermission: () -> Unit,
 ) {
     Column(
         Modifier
@@ -111,6 +132,8 @@ private fun ColumnScope.FormContent(
                 Text("Leer el cartel con el asistente")
             }
         }
+
+        LocationSection(state, vm, onRequestLocationPermission)
 
         FieldLabel("Vehículo")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -185,6 +208,53 @@ private fun ColumnScope.FormContent(
     ) {
         if (state.saving) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
         else Text(if (state.isEdit) "Guardar cambios" else "Guardar estacionamiento")
+    }
+}
+
+/** Ubicación (RF5): mapa con el marcador, estado del GPS y alternativa de tocar el mapa. */
+@Composable
+private fun LocationSection(
+    state: ParkingFormState,
+    vm: ParkingFormViewModel,
+    onRequestLocationPermission: () -> Unit,
+) {
+    FieldLabel("Ubicación")
+    val point = state.position?.let { MapPoint(it.latitude, it.longitude) }
+    ParkingMiniMap(
+        position = point,
+        onMapClick = { vm.setManualPosition(it.latitude, it.longitude) },
+    )
+    val status = when {
+        state.locating -> "Buscando tu ubicación…"
+        state.position == null && !state.hasLocationPermission ->
+            "Sin permiso de ubicación. Permitilo o tocá el mapa donde dejaste el vehículo."
+        state.position == null -> "Tocá el mapa donde dejaste el vehículo."
+        else -> {
+            val origin = when (state.positionSource) {
+                PositionSource.GPS -> state.position.accuracyMeters
+                    ?.let { "Tomada por GPS (±${it.roundToInt()} m)" } ?: "Tomada por GPS"
+                PositionSource.MANUAL -> "Marcada a mano en el mapa"
+                else -> "Ubicación guardada"
+            }
+            listOfNotNull(state.addressText, origin).joinToString(" · ")
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (state.locating) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(
+            status,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        if (state.hasLocationPermission) {
+            TextButton(onClick = vm::locate, enabled = !state.locating) { Text("Usar GPS") }
+        } else {
+            TextButton(onClick = onRequestLocationPermission) { Text("Permitir") }
+        }
     }
 }
 

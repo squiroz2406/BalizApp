@@ -19,7 +19,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Autenticación | Firebase Authentication (email y contraseña, Google) |
 | Base de datos | Cloud Firestore |
 | Imágenes | Firebase Storage (requiere plan Blaze) |
-| Mapa y ubicación | Maps Compose, FusedLocationProviderClient |
+| Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient |
 | Sensores | Magnetómetro + acelerómetro |
 | Notificaciones | Locales, con AlarmManager |
 | Agente de IA | Firebase AI Logic (Gemini) |
@@ -34,12 +34,13 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
    la consola de Firebase (Configuración del proyecto → Tus apps → Android → Agregar huella digital):
    `F5:DE:06:5D:E0:BE:97:2E:04:EE:C9:5C:1A:66:71:9F:03:07:20:BD`.
    Se puede verificar con `./gradlew signingReport` (variante `debug`).
-4. En la consola de Firebase, activar:
+4. **Mapas:** se usa OpenStreetMap (biblioteca osmdroid), que no necesita clave de API ni cuenta de facturación.
+5. En la consola de Firebase, activar:
    - Authentication → proveedores **Correo electrónico/contraseña** y **Google**.
    - **Firestore Database** y **Storage** (Storage pide el plan Blaze; dentro de la cuota gratuita no tiene costo).
-5. Publicar las reglas de seguridad: copiar `firestore.rules` y `storage.rules` en la consola, o con Firebase CLI:
+6. Publicar las reglas de seguridad: copiar `firestore.rules` y `storage.rules` en la consola, o con Firebase CLI:
    `firebase deploy --only firestore:rules,storage`.
-6. Ejecutar la configuración `app` en un emulador o teléfono con Android 8.0 (API 26) o superior.
+7. Ejecutar la configuración `app` en un emulador o teléfono con Android 8.0 (API 26) o superior.
 
 > Para la brújula conviene un teléfono físico: los emuladores no siempre simulan el magnetómetro.
 
@@ -65,7 +66,7 @@ storage.rules     Reglas de Storage
 | 1 | Navegación, barra inferior, pantallas base y tema | Hecha |
 | 2 | Firestore: modelos, repositorios, vehículos y ajustes | Hecha |
 | 3 | Lista, alta y edición, detalle (RF2–RF4) | Hecha |
-| 4 | Ubicación y mapa (RF5) | Pendiente |
+| 4 | Ubicación y mapa (RF5) | Hecha |
 | 5 | Cámara y fotos (RF6) | Pendiente |
 | 6 | Avisos de vencimiento (RF7) | Pendiente |
 | 7 | Volver al auto: brújula y distancia | Pendiente |

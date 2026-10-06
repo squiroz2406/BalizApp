@@ -30,9 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.balizapp.ui.components.MapPoint
 import com.example.balizapp.data.model.Parking
 import com.example.balizapp.data.model.ParkingStatus
 import com.example.balizapp.ui.components.EmptyState
+import com.example.balizapp.ui.components.ParkingMiniMap
 import com.example.balizapp.ui.components.ScreenScaffold
 import com.example.balizapp.ui.components.formatDateTime
 import com.example.balizapp.ui.components.formatDuration
@@ -40,7 +42,7 @@ import com.example.balizapp.ui.components.formatRemaining
 import com.example.balizapp.ui.components.rememberNow
 import com.example.balizapp.ui.components.toMillis
 
-/** Detalle (RF3): toda la información de un registro y sus acciones. Fotos y mapa: etapas 4 y 5. */
+/** Detalle (RF3): toda la información de un registro, su mapa y sus acciones. Fotos: etapa 5. */
 @Composable
 fun ParkingDetailScreen(
     vm: ParkingDetailViewModel,
@@ -79,7 +81,16 @@ fun ParkingDetailScreen(
                         )
                     }
                     TimeCard(parking)
+                    parking.location?.let { point ->
+                        ParkingMiniMap(
+                            position = MapPoint(point.latitude, point.longitude),
+                            liteMode = true,
+                            height = 180.dp,
+                            markerTitle = state.vehicle?.alias,
+                        )
+                    }
                     HorizontalDivider()
+                    parking.addressText?.let { InfoRow("Dirección", it) }
                     InfoRow("Desde", formatDateTime(parking.startedAt))
                     parking.finishedAt?.let { InfoRow("Retirado", formatDateTime(it)) }
                     parking.levelSector?.let { InfoRow("Piso o sector", it) }

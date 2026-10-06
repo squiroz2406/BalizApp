@@ -1,11 +1,14 @@
 package com.example.balizapp.ui.screens
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.balizapp.data.ActiveParkingExistsException
+import com.example.balizapp.data.GeoPosition
+import com.example.balizapp.data.LocationRepository
 import com.example.balizapp.data.ParkingRepository
 import com.example.balizapp.data.VehicleRepository
 import com.example.balizapp.data.model.Parking
@@ -14,6 +17,7 @@ import com.example.balizapp.data.model.Vehicle
 import com.example.balizapp.navigation.ParkingFormRoute
 import com.example.balizapp.ui.components.toMillis
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.GeoPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +29,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 
+/** De dónde salió la ubicación que muestra el formulario. */
+enum class PositionSource { NONE, GPS, MANUAL, SAVED }
+
 data class ParkingFormState(
     val loading: Boolean = true,
     val isEdit: Boolean = false,
@@ -33,6 +40,12 @@ data class ParkingFormState(
     val note: String = "",
     val levelSector: String = "",
     val ruleSummary: String = "",
+    /** Ubicación del vehículo (RF5). */
+    val position: GeoPosition? = null,
+    val positionSource: PositionSource = PositionSource.NONE,
+    val addressText: String? = null,
+    val locating: Boolean = false,
+    val hasLocationPermission: Boolean = false,
     /** Vencimiento en milisegundos; null = sin límite. */
     val expiresAt: Long? = null,
     /** Chip de límite marcado: minutos del preset, NO_LIMIT o null si se eligió una hora. */
@@ -49,19 +62,26 @@ data class ParkingFormState(
 }
 
 /** Alta y edición de un estacionamiento (RF4). El id llega en la ruta tipada. */
-class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
+class ParkingFormViewModel(
+    app: Application,
+    savedStateHandle: SavedStateHandle,
+) : AndroidViewModel(app) {
     private val parkingRepo = ParkingRepository()
     private val vehicleRepo = VehicleRepository()
+    private val locationRepo = LocationRepository(app)
 
     private val parkingId: String? = savedStateHandle.toRoute<ParkingFormRoute>().parkingId
     /** Registro original al editar; se copia para no perder ubicación, fotos, origen, etc. */
     private var original: Parking? = null
 
-    private val _state = MutableStateFlow(ParkingFormState(isEdit = parkingId != null))
+    private val _state = MutableStateFlow(
+        ParkingFormState(isEdit = parkingId != null, hasLocationPermission = locationRepo.hasPermission())
+    )
     val state: StateFlow<ParkingFormState> = _state.asStateFlow()
 
     init {
-        parkingId?.let(::loadExisting)
+        if (parkingId != null) loadExisting(parkingId)
+        else if (locationRepo.hasPermission()) locate() // la ubicación se toma al abrir el formulario
         // Vehículos en tiempo real; en un alta se preselecciona el primero que no esté estacionado.
         viewModelScope.launch {
             combine(vehicleRepo.observeVehicles(), parkingRepo.observeActive()) { vehicles, active ->
@@ -94,6 +114,9 @@ class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                         note = parking.note.orEmpty(),
                         levelSector = parking.levelSector.orEmpty(),
                         ruleSummary = parking.ruleSummary.orEmpty(),
+                        position = parking.location?.let { GeoPosition(it.latitude, it.longitude) },
+                        positionSource = if (parking.location != null) PositionSource.SAVED else PositionSource.NONE,
+                        addressText = parking.addressText,
                         expiresAt = parking.expiresAt?.toMillis(),
                         selectedPreset = if (parking.expiresAt == null) ParkingFormState.NO_LIMIT else null,
                     )
@@ -102,6 +125,48 @@ class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                 Log.w(TAG, "No se pudo cargar $id", e)
                 _state.update { it.copy(loading = false, error = e.message ?: "No se pudo cargar") }
             }
+        }
+    }
+
+    /** Resultado del pedido de permiso: si se concedió, se toma la ubicación. */
+    fun onLocationPermissionResult(granted: Boolean) {
+        _state.update { it.copy(hasLocationPermission = granted) }
+        if (granted && !_state.value.isEdit) locate()
+    }
+
+    /** Lectura única del GPS. */
+    fun locate() {
+        if (_state.value.locating) return
+        _state.update { it.copy(locating = true, error = null) }
+        viewModelScope.launch {
+            val position = locationRepo.currentPosition()
+            if (position == null) {
+                _state.update {
+                    it.copy(locating = false, error = "No se pudo obtener la ubicación. Tocá el mapa para marcarla.")
+                }
+                return@launch
+            }
+            _state.update {
+                it.copy(locating = false, position = position, positionSource = PositionSource.GPS, addressText = null)
+            }
+            resolveAddress(position)
+        }
+    }
+
+    /** Plan B sin GPS o para corregir: el usuario toca el mapa donde dejó el vehículo. */
+    fun setManualPosition(latitude: Double, longitude: Double) {
+        val position = GeoPosition(latitude, longitude)
+        _state.update {
+            it.copy(position = position, positionSource = PositionSource.MANUAL, addressText = null, error = null)
+        }
+        resolveAddress(position)
+    }
+
+    private fun resolveAddress(position: GeoPosition) {
+        viewModelScope.launch {
+            val address = locationRepo.addressFor(position.latitude, position.longitude)
+            // Solo se aplica si la ubicación no cambió mientras se resolvía.
+            _state.update { if (it.position == position) it.copy(addressText = address) else it }
         }
     }
 
@@ -138,6 +203,8 @@ class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         val s = _state.value
         if (s.saving) return
         val vehicleId = s.vehicleId ?: return fail("Elegí un vehículo")
+        val position = s.position ?: return fail("Marcá en el mapa dónde dejaste el vehículo")
+        val geoPoint = GeoPoint(position.latitude, position.longitude)
         if (s.expiresAt != null && s.expiresAt <= System.currentTimeMillis()) {
             return fail("El vencimiento tiene que ser posterior a ahora")
         }
@@ -151,6 +218,8 @@ class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                     parkingRepo.create(
                         Parking(
                             vehicleId = vehicleId,
+                            location = geoPoint,
+                            addressText = s.addressText,
                             note = s.note.trim().ifEmpty { null },
                             levelSector = s.levelSector.trim().ifEmpty { null },
                             ruleSummary = s.ruleSummary.trim().ifEmpty { null },
@@ -166,6 +235,8 @@ class ParkingFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                     parkingRepo.update(
                         base.copy(
                             vehicleId = vehicleId,
+                            location = geoPoint,
+                            addressText = s.addressText,
                             note = s.note.trim().ifEmpty { null },
                             levelSector = s.levelSector.trim().ifEmpty { null },
                             ruleSummary = s.ruleSummary.trim().ifEmpty { null },

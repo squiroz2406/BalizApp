@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.fragment.app.FragmentActivity
 import com.example.balizapp.data.UserRepository
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -81,8 +82,20 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         run { repo.register(name.trim(), email.trim(), password) }
     }
 
-    fun signInWithGoogle(activityContext: android.content.Context) {
-        run { repo.signInWithGoogle(activityContext) }
+    /** Ingreso con Google: primero pide la huella y, si se verifica, abre el selector de cuentas. */
+    fun signInWithGoogle(activity: FragmentActivity) {
+        run {
+            when (val result = BiometricGate.authenticate(
+                activity,
+                title = "Verificá tu identidad",
+                subtitle = "Usá tu huella para continuar con Google",
+            )) {
+                BiometricResult.Success -> repo.signInWithGoogle(activity)
+                BiometricResult.Cancelled -> throw BiometricCancelledException()
+                is BiometricResult.Unavailable -> error(result.message)
+                is BiometricResult.Failed -> error("No se pudo verificar tu identidad: ${result.message}")
+            }
+        }
     }
 
     fun sendPasswordReset(email: String) {
@@ -115,6 +128,8 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 refreshSession()
                 _state.update { it.copy(busy = false, message = success) }
             } catch (e: GetCredentialCancellationException) {
+                _state.update { it.copy(busy = false) }
+            } catch (e: BiometricCancelledException) {
                 _state.update { it.copy(busy = false) }
             } catch (e: Exception) {
                 Log.w(TAG, "Error de autenticación", e)

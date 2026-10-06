@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.example.balizapp.auth.AuthStatus
 import com.example.balizapp.auth.AuthUiState
 import com.example.balizapp.auth.AuthViewModel
+import com.example.balizapp.auth.findFragmentActivity
 
 private enum class AuthRoute { Login, Register, Forgot }
 
@@ -94,7 +95,7 @@ private fun LoginScreen(state: AuthUiState, vm: AuthViewModel, onRegister: () ->
         }
         TextButton(onForgot, Modifier.align(Alignment.End)) { Text("¿Olvidaste tu contraseña?") }
         OrDivider()
-        OutlinedButton({ vm.signInWithGoogle(context) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
+        OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
             Text("Continuar con Google")
         }
         TextButton(onRegister, Modifier.align(Alignment.CenterHorizontally)) {
@@ -122,7 +123,7 @@ private fun RegisterScreen(state: AuthUiState, vm: AuthViewModel, onBack: () -> 
             Text("Registrarme")
         }
         OrDivider()
-        OutlinedButton({ vm.signInWithGoogle(context) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
+        OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
             Text("Registrarme con Google")
         }
         TextButton(onBack, Modifier.align(Alignment.CenterHorizontally)) {

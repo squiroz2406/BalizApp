@@ -29,6 +29,7 @@ import androidx.navigation.toRoute
 import com.example.balizapp.ui.screens.HomeScreen
 import com.example.balizapp.ui.screens.HomeViewModel
 import com.example.balizapp.ui.screens.MapScreen
+import com.example.balizapp.ui.screens.MapViewModel
 import com.example.balizapp.ui.screens.ParkingDetailScreen
 import com.example.balizapp.ui.screens.ParkingDetailViewModel
 import com.example.balizapp.ui.screens.ParkingFormScreen
@@ -101,7 +102,12 @@ fun AppNavHost(
                     onOpenParking = { id -> navController.navigate(ParkingDetailRoute(id)) },
                 )
             }
-            composable<MapRoute> { MapScreen() }
+            composable<MapRoute> {
+                MapScreen(
+                    vm = viewModel<MapViewModel>(),
+                    onOpenParking = { id -> navController.navigate(ParkingDetailRoute(id)) },
+                )
+            }
             composable<ProfileRoute> {
                 ProfileScreen(
                     vm = viewModel<ProfileViewModel>(),
