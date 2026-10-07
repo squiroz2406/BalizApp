@@ -2,7 +2,13 @@ package com.example.balizapp.auth
 
 import android.app.Application
 import android.util.Patterns
+import android.util.Log
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import androidx.fragment.app.FragmentActivity
+import com.example.balizapp.data.UserRepository
+import com.example.balizapp.notifications.ReminderScheduler
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseNetworkException
@@ -30,6 +36,7 @@ data class AuthUiState(
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = AuthRepository()
+    private val users = UserRepository()
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
@@ -51,6 +58,13 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 userEmail = user?.email,
             )
         }
+        // Crea users/{uid} la primera vez que entra (o actualiza nombre y correo).
+        if (_state.value.status == AuthStatus.SignedIn) {
+            viewModelScope.launch {
+                runCatching { users.ensureProfile() }
+                    .onFailure { Log.w(TAG, "No se pudo crear el perfil en Firestore", it) }
+            }
+        }
     }
 
     fun clearFeedback() = _state.update { it.copy(error = null, message = null) }
@@ -69,8 +83,20 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         run { repo.register(name.trim(), email.trim(), password) }
     }
 
-    fun signInWithGoogle(activityContext: android.content.Context) {
-        run { repo.signInWithGoogle(activityContext) }
+    /** Ingreso con Google: primero pide la huella y, si se verifica, abre el selector de cuentas. */
+    fun signInWithGoogle(activity: FragmentActivity) {
+        run {
+            when (val result = BiometricGate.authenticate(
+                activity,
+                title = "Verificá tu identidad",
+                subtitle = "Usá tu huella para continuar con Google",
+            )) {
+                BiometricResult.Success -> repo.signInWithGoogle(activity)
+                BiometricResult.Cancelled -> throw BiometricCancelledException()
+                is BiometricResult.Unavailable -> error(result.message)
+                is BiometricResult.Failed -> error("No se pudo verificar tu identidad: ${result.message}")
+            }
+        }
     }
 
     fun sendPasswordReset(email: String) {
@@ -90,6 +116,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     fun signOut(activityContext: android.content.Context) {
         viewModelScope.launch {
             repo.signOut(activityContext)
+            ReminderScheduler(getApplication<Application>()).cancelAll() // no deben sonar avisos de esta cuenta
             _state.update { AuthUiState(status = AuthStatus.SignedOut) }
         }
     }
@@ -104,7 +131,10 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 _state.update { it.copy(busy = false, message = success) }
             } catch (e: GetCredentialCancellationException) {
                 _state.update { it.copy(busy = false) }
+            } catch (e: BiometricCancelledException) {
+                _state.update { it.copy(busy = false) }
             } catch (e: Exception) {
+                Log.w(TAG, "Error de autenticación", e)
                 _state.update { it.copy(busy = false, error = messageFor(e)) }
             }
         }
@@ -118,6 +148,10 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         else -> null
     }
 
+    private companion object {
+        const val TAG = "AuthViewModel"
+    }
+
     private fun messageFor(e: Exception): String = when {
         e.message == "verification-pending" -> "Todavía no verificaste tu correo"
         e is FirebaseAuthWeakPasswordException -> "La contraseña es demasiado débil"
@@ -125,6 +159,10 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         e is FirebaseAuthInvalidUserException -> "No existe una cuenta con ese correo"
         e is FirebaseAuthInvalidCredentialsException -> "Correo o contraseña incorrectos"
         e is FirebaseNetworkException -> "Sin conexión. Revisá tu internet"
+        e is NoCredentialException ->
+            "No hay una cuenta de Google disponible. Agregá una en Ajustes del teléfono; " +
+                "si ya hay una, falta registrar la huella SHA-1 de la app en Firebase"
+        e is GetCredentialException -> "No se pudo iniciar sesión con Google: ${e.errorMessage ?: e.type}"
         e is FirebaseAuthException -> "Error de autenticación (${e.errorCode})"
         else -> e.message ?: "Ocurrió un error inesperado"
     }

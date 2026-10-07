@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.example.balizapp.auth.AuthStatus
 import com.example.balizapp.auth.AuthUiState
 import com.example.balizapp.auth.AuthViewModel
+import com.example.balizapp.auth.findFragmentActivity
 
 private enum class AuthRoute { Login, Register, Forgot }
 
@@ -42,7 +44,7 @@ fun AuthGate(vm: AuthViewModel, state: AuthUiState, content: @Composable () -> U
     var route by rememberSaveable { mutableStateOf(AuthRoute.Login) }
     when (state.status) {
         AuthStatus.Loading -> Column(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().safeDrawingPadding(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) { CircularProgressIndicator() }
@@ -67,6 +69,7 @@ private fun AuthLayout(title: String, state: AuthUiState, body: @Composable Colu
     Column(
         Modifier
             .fillMaxSize()
+            .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -92,7 +95,7 @@ private fun LoginScreen(state: AuthUiState, vm: AuthViewModel, onRegister: () ->
         }
         TextButton(onForgot, Modifier.align(Alignment.End)) { Text("¿Olvidaste tu contraseña?") }
         OrDivider()
-        OutlinedButton({ vm.signInWithGoogle(context) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
+        OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
             Text("Continuar con Google")
         }
         TextButton(onRegister, Modifier.align(Alignment.CenterHorizontally)) {
@@ -120,7 +123,7 @@ private fun RegisterScreen(state: AuthUiState, vm: AuthViewModel, onBack: () -> 
             Text("Registrarme")
         }
         OrDivider()
-        OutlinedButton({ vm.signInWithGoogle(context) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
+        OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
             Text("Registrarme con Google")
         }
         TextButton(onBack, Modifier.align(Alignment.CenterHorizontally)) {
