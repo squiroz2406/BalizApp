@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "899032698913-nh744eu7lk8etsg9jqqcknju8aisesti.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.balizapp",
+            "certificate_hash": "f5de065de0be972e04eec95c1a66719f030720bd"
+          }
+        },
+        {
           "client_id": "899032698913-4382der7mvr6rnq75pphps14nt1o6k0r.apps.googleusercontent.com",
           "client_type": 3
         }
