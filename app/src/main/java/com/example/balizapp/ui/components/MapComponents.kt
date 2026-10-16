@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +31,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.balizapp.R
 import com.example.balizapp.data.hasLocationPermission
+import com.example.balizapp.data.model.VehicleType
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -62,6 +65,8 @@ data class MapMarker(
     val title: String? = null,
     val color: Color,
     val alpha: Float = 1f,
+    /** Si se indica, el marcador es un círculo con el ícono del vehículo; si no, un pin común. */
+    val vehicleType: VehicleType? = null,
 )
 
 /**
@@ -189,8 +194,8 @@ fun OsmMap(
                 markers.forEach { m ->
                     map.overlays.add(Marker(map).apply {
                         position = GeoPoint(m.point.latitude, m.point.longitude)
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                        icon = pinIcon(map.context, m.color)
+                        setAnchor(Marker.ANCHOR_CENTER, if (m.vehicleType != null) Marker.ANCHOR_CENTER else Marker.ANCHOR_BOTTOM)
+                        icon = if (m.vehicleType != null) vehicleIcon(map.context, m.vehicleType, m.color) else pinIcon(map.context, m.color)
                         alpha = m.alpha
                         title = m.title
                         setInfoWindow(null) // la info se muestra en Compose, no en el globo de osmdroid
@@ -243,6 +248,7 @@ fun ParkingMiniMap(
     liteMode: Boolean = false,
     markerTitle: String? = null,
     markerColor: Color = Color(0xFFE65100),
+    vehicleType: VehicleType? = null,
     onMapClick: ((MapPoint) -> Unit)? = null,
 ) {
     OsmMap(
@@ -251,7 +257,7 @@ fun ParkingMiniMap(
             .height(height)
             .clip(RoundedCornerShape(16.dp)),
         center = position,
-        markers = position?.let { listOf(MapMarker("pos", it, markerTitle, markerColor)) }.orEmpty(),
+        markers = position?.let { listOf(MapMarker("pos", it, markerTitle, markerColor, vehicleType = vehicleType)) }.orEmpty(),
         interactive = !liteMode,
         onMapClick = onMapClick,
     )
@@ -286,6 +292,31 @@ private fun updateMyLocation(map: MapView, holder: MapHolder, show: Boolean) {
 
 private fun pinIcon(context: Context, color: Color): Drawable? =
     ContextCompat.getDrawable(context, R.drawable.ic_map_pin)?.mutate()?.apply { setTint(color.toArgb()) }
+
+/** Círculo de color con borde blanco y el ícono del vehículo (auto o moto) en blanco. */
+private fun vehicleIcon(context: Context, type: VehicleType, color: Color): Drawable? {
+    val density = context.resources.displayMetrics.density
+    val size = (40 * density).toInt()
+    val inset = (8 * density).toInt()
+    val glyph = ContextCompat.getDrawable(
+        context,
+        if (type == VehicleType.MOTORCYCLE) R.drawable.ic_motorcycle else R.drawable.ic_car,
+    )?.mutate()?.apply { setTint(android.graphics.Color.WHITE) } ?: return null
+    val circle = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(color.toArgb())
+        setStroke((2 * density).toInt(), android.graphics.Color.WHITE)
+    }
+    return LayerDrawable(arrayOf(circle, glyph)).apply {
+        setLayerInset(1, inset, inset, inset, inset)
+        setBounds(0, 0, size, size)
+    }.let { layers ->
+        // LayerDrawable no tiene tamaño intrínseco: se rasteriza para que osmdroid lo dibuje a 40dp.
+        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+        layers.draw(android.graphics.Canvas(bitmap))
+        android.graphics.drawable.BitmapDrawable(context.resources, bitmap)
+    }
+}
 
 /**
  * Configuración de osmdroid según la política de uso de los servidores de OpenStreetMap

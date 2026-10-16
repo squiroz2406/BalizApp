@@ -96,6 +96,7 @@ fun ParkingDetailScreen(
                             liteMode = true,
                             height = 180.dp,
                             markerTitle = state.vehicle?.alias,
+                            vehicleType = state.vehicle?.type,
                         )
                     }
                     if (state.photos.isNotEmpty()) PhotosRow(state.photos)

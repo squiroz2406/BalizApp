@@ -262,6 +262,7 @@ private fun LocationSection(
     val point = state.position?.let { MapPoint(it.latitude, it.longitude) }
     ParkingMiniMap(
         position = point,
+        vehicleType = state.vehicles.firstOrNull { it.id == state.vehicleId }?.type,
         onMapClick = { vm.setManualPosition(it.latitude, it.longitude) },
     )
     val status = when {

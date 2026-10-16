@@ -303,7 +303,7 @@ private fun ReturnMap(state: ReturnToCarState, car: MapPoint, modifier: Modifier
     LaunchedEffect(routePoints) { if (routePoints.size >= 2) fitRequest++ }
     val showRoute = routePoints.size >= 2
     val markers = remember(car, state.vehicle) {
-        listOf(MapMarker("car", car, state.vehicle?.alias, CarColor))
+        listOf(MapMarker("car", car, state.vehicle?.alias, CarColor, vehicleType = state.vehicle?.type))
     }
     OsmMap(
         modifier = modifier

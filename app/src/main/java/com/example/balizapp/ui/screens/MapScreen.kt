@@ -67,9 +67,9 @@ fun MapScreen(vm: MapViewModel, onOpenParking: (String) -> Unit) {
 
     val markers = remember(state.active, state.history, state.vehicles) {
         state.history.mapNotNull { p ->
-            p.point()?.let { MapMarker(p.id, it, state.vehicles[p.vehicleId]?.alias, HistoryColor, alpha = 0.6f) }
+            p.point()?.let { MapMarker(p.id, it, state.vehicles[p.vehicleId]?.alias, HistoryColor, alpha = 0.6f, vehicleType = state.vehicles[p.vehicleId]?.type) }
         } + state.active.mapNotNull { p ->
-            p.point()?.let { MapMarker(p.id, it, state.vehicles[p.vehicleId]?.alias, ActiveColor) }
+            p.point()?.let { MapMarker(p.id, it, state.vehicles[p.vehicleId]?.alias, ActiveColor, vehicleType = state.vehicles[p.vehicleId]?.type) }
         }
     }
     val selected = (state.active + state.history).firstOrNull { it.id == selectedId }
