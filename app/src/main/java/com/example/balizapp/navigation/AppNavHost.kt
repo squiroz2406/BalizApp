@@ -39,6 +39,7 @@ import com.example.balizapp.ui.screens.ParkingDetailViewModel
 import com.example.balizapp.ui.screens.ParkingFormScreen
 import com.example.balizapp.ui.screens.ParkingFormViewModel
 import com.example.balizapp.ui.screens.ProfileScreen
+import com.example.balizapp.ui.theme.ThemeMode
 import com.example.balizapp.ui.screens.ProfileViewModel
 import com.example.balizapp.ui.screens.ReturnToCarScreen
 import com.example.balizapp.ui.screens.ReturnToCarViewModel
@@ -69,6 +70,8 @@ fun AppNavHost(
     userName: String?,
     userEmail: String?,
     onSignOut: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
     openReturnToCar: String? = null,
     onOpenReturnToCarHandled: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
@@ -130,6 +133,8 @@ fun AppNavHost(
                     userName = userName,
                     userEmail = userEmail,
                     onSignOut = onSignOut,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
                 )
             }
             composable<ParkingFormRoute> {

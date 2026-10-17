@@ -56,6 +56,7 @@ import com.example.balizapp.data.model.UserProfile
 import com.example.balizapp.data.model.Vehicle
 import com.example.balizapp.data.model.VehicleType
 import com.example.balizapp.ui.components.ScreenScaffold
+import com.example.balizapp.ui.theme.ThemeMode
 
 /** Perfil y ajustes (RF1): datos del usuario, vehículos, minutos de aviso y cerrar sesión. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -65,6 +66,8 @@ fun ProfileScreen(
     userName: String?,
     userEmail: String?,
     onSignOut: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
 ) {
     val state by vm.state.collectAsState()
     // null = diálogo cerrado; Vehicle() = alta; Vehicle con id = edición
@@ -118,6 +121,18 @@ fun ProfileScreen(
             }
 
             AlertsStatus()
+
+            HorizontalDivider()
+            SectionTitle("Apariencia")
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                ThemeMode.entries.forEachIndexed { index, option ->
+                    SegmentedButton(
+                        selected = themeMode == option,
+                        onClick = { onThemeModeChange(option) },
+                        shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
+                    ) { Text(option.label) }
+                }
+            }
 
             state.error?.let { msg ->
                 Row(verticalAlignment = Alignment.CenterVertically) {

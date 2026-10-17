@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -20,6 +21,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -122,11 +124,13 @@ fun OsmMap(
     val currentOnMapClick = rememberUpdatedState(onMapClick)
     val currentOnMarkerClick = rememberUpdatedState(onMarkerClick)
     val holder = remember { MapHolder() }
+    // Mapa oscuro cuando el tema de la app es oscuro (sea por elección o por el sistema).
+    val darkMap = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     val mapView = remember {
         configureOsmdroid(context)
         MapView(context).apply {
-            setTileSource(MapTilerTileSource)
+            setTileSource(MapTilerTileSource.forTheme(darkMap))
             setMultiTouchControls(interactive)
             zoomController.setVisibility(
                 if (interactive) CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT
@@ -174,6 +178,9 @@ fun OsmMap(
         factory = { mapView },
         modifier = modifier,
         update = { map ->
+            val tiles = MapTilerTileSource.forTheme(darkMap)
+            if (map.tileProvider.tileSource !== tiles) map.setTileSource(tiles)
+
             // Cámara: solo se mueve cuando cambia el centro pedido.
             if (center != null && (center != holder.lastCenter || centerRequest != holder.lastRequest)) {
                 val target = GeoPoint(center.latitude, center.longitude)

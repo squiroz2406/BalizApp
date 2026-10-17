@@ -14,7 +14,7 @@ private const val MIN_ZOOM = 15
 private const val MAX_ZOOM = 18
 
 /**
- * Descarga a disco los mosaicos del mapa alrededor de un punto (unos 150 en total), para poder
+ * Descarga a disco los mosaicos del mapa alrededor de un punto (unos 150 por estilo, claro y oscuro), para poder
  * volver al vehículo sin conexión. Es un área chica a propósito para cuidar la cuota gratuita
  * de MapTiler (los servidores de OpenStreetMap no permiten descargas masivas). No hace nada si no hay internet. Llamar desde el hilo principal.
  */
@@ -26,14 +26,17 @@ fun precacheTilesAround(context: Context, latitude: Double, longitude: Double) {
         val dLat = RADIUS_METERS / 111_320.0
         val dLon = RADIUS_METERS / (111_320.0 * Math.cos(Math.toRadians(latitude)))
         val box = BoundingBox(latitude + dLat, longitude + dLon, latitude - dLat, longitude - dLon)
-        CacheManager(MapTilerTileSource, SqlTileWriter(), MIN_ZOOM, MAX_ZOOM)
-            .downloadAreaAsyncNoUI(appContext, box, MIN_ZOOM, MAX_ZOOM, object : CacheManager.CacheManagerCallback {
-                override fun onTaskComplete() = Unit
-                override fun onTaskFailed(errors: Int) { Log.w(TAG, "Mosaicos con error: $errors") }
-                override fun updateProgress(progress: Int, currentZoomLevel: Int, zoomMin: Int, zoomMax: Int) = Unit
-                override fun downloadStarted() = Unit
-                override fun setPossibleTilesInArea(total: Int) = Unit
-            })
+        // Se guardan los dos estilos (claro y oscuro) para que el mapa funcione sin conexión con cualquier tema.
+        listOf(MapTilerTileSource.Streets, MapTilerTileSource.Dark).forEach { source ->
+            CacheManager(source, SqlTileWriter(), MIN_ZOOM, MAX_ZOOM)
+                .downloadAreaAsyncNoUI(appContext, box, MIN_ZOOM, MAX_ZOOM, object : CacheManager.CacheManagerCallback {
+                    override fun onTaskComplete() = Unit
+                    override fun onTaskFailed(errors: Int) { Log.w(TAG, "Mosaicos con error: $errors") }
+                    override fun updateProgress(progress: Int, currentZoomLevel: Int, zoomMin: Int, zoomMax: Int) = Unit
+                    override fun downloadStarted() = Unit
+                    override fun setPossibleTilesInArea(total: Int) = Unit
+                })
+        }
     } catch (e: Exception) {
         Log.w(TAG, "No se pudo precargar el mapa", e)
     }
