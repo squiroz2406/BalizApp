@@ -1,9 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// La clave de MapTiler vive en local.properties (ignorado por git), no en el código.
+val mapTilerKey: String = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}.getProperty("MAPTILER_KEY", "")
 
 android {
     namespace = "com.example.balizapp"
@@ -19,6 +26,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "MAPTILER_KEY", "\"$mapTilerKey\"")
     }
 
     // Clave de depuración compartida por el grupo: así todos firman con la misma huella SHA-1
@@ -45,6 +54,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

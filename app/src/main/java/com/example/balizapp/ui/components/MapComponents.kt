@@ -34,7 +34,6 @@ import com.example.balizapp.data.hasLocationPermission
 import com.example.balizapp.data.model.VehicleType
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
@@ -48,7 +47,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 
 /*
- * Mapa con OpenStreetMap (osmdroid): no necesita clave de API ni cuenta de facturación.
+ * Mapa con osmdroid y mosaicos de MapTiler (datos de OpenStreetMap), ver [MapTilerTileSource].
  * MapView es una View clásica, así que se integra en Compose con AndroidView.
  */
 
@@ -127,7 +126,7 @@ fun OsmMap(
     val mapView = remember {
         configureOsmdroid(context)
         MapView(context).apply {
-            setTileSource(TileSourceFactory.MAPNIK)
+            setTileSource(MapTilerTileSource)
             setMultiTouchControls(interactive)
             zoomController.setVisibility(
                 if (interactive) CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT
@@ -137,7 +136,7 @@ fun OsmMap(
             controller.setZoom(if (center != null) zoom else 12.0)
             val start = center ?: DefaultMapPoint
             controller.setCenter(GeoPoint(start.latitude, start.longitude))
-            // Atribución obligatoria de OpenStreetMap
+            // Atribución obligatoria de MapTiler y OpenStreetMap
             overlays.add(CopyrightOverlay(context))
             // Toques sobre el mapa (no sobre un marcador)
             overlays.add(MapEventsOverlay(object : MapEventsReceiver {
