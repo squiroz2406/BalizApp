@@ -1,7 +1,10 @@
 package com.example.balizapp.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
+import com.example.balizapp.ui.components.ConnectionBanner
+import com.example.balizapp.ui.components.ConnectionViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -98,14 +101,15 @@ fun AppNavHost(
             }
         },
     ) { innerPadding ->
+        Column(
+            Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+        ) {
         NavHost(
             navController = navController,
             startDestination = HomeRoute,
-            // consumeWindowInsets evita que las barras superiores de cada pantalla
-            // vuelvan a sumar el espacio de la barra de estado.
-            modifier = Modifier
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding),
+            modifier = Modifier.weight(1f),
         ) {
             composable<HomeRoute> {
                 HomeScreen(
@@ -166,6 +170,9 @@ fun AppNavHost(
             composable<SignAssistantRoute> {
                 SignAssistantScreen(onBack = { navController.popBackStack() })
             }
+        }
+        // Abajo (y no arriba): cada pantalla ya maneja el espacio de la barra de estado.
+        ConnectionBanner(viewModel<ConnectionViewModel>())
         }
     }
 }

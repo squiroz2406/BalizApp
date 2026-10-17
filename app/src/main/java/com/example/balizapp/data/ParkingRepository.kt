@@ -7,6 +7,12 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -53,6 +59,26 @@ class ParkingRepository(
                 }
         }
 
+    /** true mientras haya cambios guardados en el teléfono que todavía no llegaron al servidor. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observePendingWrites(): Flow<Boolean> = auth.uidFlow().flatMapLatest { uid ->
+        if (uid == null) flowOf(false)
+        else callbackFlow {
+            val registration = parkings(uid).addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, _ ->
+                snapshot?.let { trySend(it.metadata.hasPendingWrites()) }
+            }
+            awaitClose { registration.remove() }
+        }.transformLatest { pending ->
+            emit(pending)
+            // La marca del listener puede quedar desactualizada tras reconectar; waitForPendingWrites
+            // termina cuando el servidor confirmó (o rechazó) todo lo pendiente.
+            if (pending) {
+                db.waitForPendingWrites().await()
+                emit(false)
+            }
+        }
+    }.distinctUntilChanged()
+
     /** Un estacionamiento en tiempo real; null si no existe (por ejemplo, si se borró). */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeParking(id: String): Flow<Parking?> = auth.uidFlow().flatMapLatest { uid ->
@@ -70,13 +96,16 @@ class ParkingRepository(
         return if (doc.exists()) Parking.from(doc) else null
     }
 
-    suspend fun hasActiveParking(vehicleId: String): Boolean =
-        parkings(requireUid())
+    suspend fun hasActiveParking(vehicleId: String): Boolean {
+        val query = parkings(requireUid())
             .whereEqualTo("vehicleId", vehicleId)
             .whereEqualTo("status", ParkingStatus.ACTIVE.firestoreValue)
             .limit(1)
-            .get().await()
-            .isEmpty.not()
+        // Sin conexión, get() espera a que el servidor conteste; si tarda, se responde con el cache local.
+        val snapshot = withTimeoutOrNull(READ_TIMEOUT_MS) { query.get().await() }
+            ?: query.get(Source.CACHE).await()
+        return !snapshot.isEmpty
+    }
 
     /** Crea un estacionamiento activo y devuelve su id. */
     suspend fun create(parking: Parking): String {
@@ -127,5 +156,6 @@ class ParkingRepository(
     private companion object {
         const val TAG = "ParkingRepository"
         const val WRITE_TIMEOUT_MS = 3_000L
+        const val READ_TIMEOUT_MS = 3_000L
     }
 }

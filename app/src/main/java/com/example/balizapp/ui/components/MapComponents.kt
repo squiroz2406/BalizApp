@@ -323,17 +323,20 @@ private fun vehicleIcon(context: Context, type: VehicleType, color: Color): Draw
  * (https://operations.osmfoundation.org/policies/tiles/):
  * - User-Agent propio y estable que nombra la app. Un ID de paquete genérico como
  *   "com.example..." está bloqueado y devuelve mosaicos de "Access blocked".
- * - Los mosaicos se guardan en cache (carpeta privada de la app) para no volver a pedirlos.
+ * - Los mosaicos se guardan en disco (filesDir, que el sistema no vacía solo) y se conservan entre
+ *   ejecuciones; vencidos siguen sirviéndose hasta 30 días, para que el mapa funcione sin conexión.
  */
-private fun configureOsmdroid(context: Context) {
+fun configureOsmdroid(context: Context) {
     val config = Configuration.getInstance()
     if (config.userAgentValue == OSM_USER_AGENT) return // ya configurado
     config.userAgentValue = OSM_USER_AGENT
-    val base = File(context.cacheDir, "osmdroid")
-    // El cache viejo puede tener guardados los mosaicos de "Access blocked": se descarta.
-    File(base, "tiles").takeIf { it.exists() }?.deleteRecursively()
+    val base = File(context.filesDir, "osmdroid")
     config.osmdroidBasePath = base
     config.osmdroidTileCache = File(base, "tile-cache")
+    config.expirationExtendedDuration = OFFLINE_TILE_GRACE_MS
+    config.tileFileSystemCacheMaxBytes = 300L * 1024 * 1024
+    config.tileFileSystemCacheTrimBytes = 250L * 1024 * 1024
 }
 
+private const val OFFLINE_TILE_GRACE_MS = 30L * 24 * 60 * 60 * 1000
 private const val OSM_USER_AGENT = "BalizApp/1.0 (Android; trabajo practico UNAJ; +https://github.com/squiroz2406/BalizApp)"

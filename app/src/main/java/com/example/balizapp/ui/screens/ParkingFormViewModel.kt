@@ -3,6 +3,7 @@ package com.example.balizapp.ui.screens
 import android.app.Application
 import android.net.Uri
 import android.util.Log
+import com.example.balizapp.ui.components.precacheTilesAround
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -318,6 +319,7 @@ class ParkingFormViewModel(
                     base.id
                 }
                 savePhotos(id, s, base)
+                precacheTilesAround(getApplication(), position.latitude, position.longitude)
                 _state.update { it.copy(saving = false, savedId = id) }
             } catch (e: ActiveParkingExistsException) {
                 _state.update { it.copy(saving = false, error = e.message) }

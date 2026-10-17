@@ -12,6 +12,7 @@ import com.example.balizapp.data.GeoPosition
 import com.example.balizapp.data.LocationRepository
 import com.example.balizapp.data.ParkingRepository
 import com.example.balizapp.data.RouteMath
+import com.example.balizapp.data.RouteCache
 import com.example.balizapp.data.RouteRepository
 import com.example.balizapp.data.VehicleRepository
 import com.example.balizapp.data.WalkingRoute
@@ -101,6 +102,7 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
     private val vehicleRepo = VehicleRepository()
     private val locationRepo = LocationRepository(app)
     private val routeRepo = RouteRepository()
+    private val routeCache = RouteCache(app)
     private val compass = CompassSensor(app)
 
     private val permission = MutableStateFlow(locationRepo.hasPermission())
@@ -162,7 +164,11 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
             }
             if (!forced && current == null && now - lastRequestAt < RouteRepository.MIN_INTERVAL_MS && lastRequestAt != 0L) {
                 // Falló hace poco: no insistir hasta que pase el intervalo.
-                emit(RouteUi(error = "No se pudo calcular la ruta. Se reintenta en unos segundos."))
+                val saved = savedRouteFor(input.car, me)
+                emit(
+                    if (saved != null) RouteUi(route = saved, error = SAVED_ROUTE_MESSAGE)
+                    else RouteUi(error = "No se pudo calcular la ruta. Se reintenta en unos segundos.")
+                )
                 return@transform
             }
             routeRequest = input.recalc
@@ -172,13 +178,24 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
                 val route = routeRepo.walkingRoute(me, input.car.latitude, input.car.longitude)
                 lastRoute = route
                 lastRouteDestination = input.car
+                routeCache.save(parkingId, input.car, route)
                 emit(RouteUi(route = route))
             } catch (e: Exception) {
                 Log.w(TAG, "No se pudo calcular la ruta", e)
-                emit(RouteUi(route = current, error = "No se pudo calcular la ruta por calles (¿sin conexión?). Se muestra la dirección directa."))
+                val saved = current ?: savedRouteFor(input.car, me)
+                emit(
+                    if (saved != null) RouteUi(route = saved, error = SAVED_ROUTE_MESSAGE)
+                    else RouteUi(error = "Sin conexión: no se puede calcular la ruta por calles. Se muestra la línea recta hasta el vehículo.")
+                )
             }
         }
         .onStart { emit(RouteUi()) }
+
+    /** Recorrido guardado en disco, si sirve desde donde está el usuario (cerca de su trazado). */
+    private fun savedRouteFor(car: GeoPosition, me: GeoPosition): WalkingRoute? =
+        routeCache.load(parkingId, car)?.takeIf {
+            RouteMath.closestPoint(it.points, me).second <= SAVED_ROUTE_MAX_DISTANCE_METERS
+        }
 
     private data class RouteInput(val mode: GuidanceMode, val me: GeoPosition?, val car: GeoPosition?, val recalc: Int)
 
@@ -260,5 +277,8 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
         const val TAG = "ReturnToCarViewModel"
         /** Si el usuario se aleja más que esto de la línea, se recalcula la ruta. */
         const val OFF_ROUTE_METERS = 40f
+        /** Más lejos que esto del trazado guardado, el recorrido ya no sirve de guía. */
+        const val SAVED_ROUTE_MAX_DISTANCE_METERS = 150f
+        const val SAVED_ROUTE_MESSAGE = "Sin conexión: usando el último recorrido por calles guardado."
     }
 }

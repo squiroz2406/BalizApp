@@ -126,10 +126,12 @@ private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Uni
         ),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            CompassArrow(rotation = state.arrowRotation, color = if (arrived) ArrivedColor else CarColor)
+            // Por calles se sigue la línea del mapa: no hay brújula.
+            val showArrow = state.mode == GuidanceMode.DIRECT
+            if (showArrow) CompassArrow(rotation = state.arrowRotation, color = if (arrived) ArrivedColor else CarColor)
             Column(
                 Modifier
-                    .padding(start = 16.dp)
+                    .padding(start = if (showArrow) 16.dp else 0.dp)
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -167,10 +169,10 @@ private fun guidanceText(state: ReturnToCarState): String {
         !state.hasLocationPermission -> "Permití la ubicación para calcular hacia dónde caminar."
         state.arrived -> "Estás a menos de ${ReturnToCarState.ARRIVED_METERS.roundToInt()} m del vehículo."
         bearing == null -> "Esperando el GPS…"
-        state.mode == GuidanceMode.STREETS && state.routeUi.route != null && state.compassAvailable && !state.compassUnreliable ->
-            "Seguí la flecha: apunta al próximo tramo del recorrido por calles."
-        state.mode == GuidanceMode.STREETS && state.routeUi.route != null && !state.compassAvailable ->
+        state.mode == GuidanceMode.STREETS && state.routeUi.route != null ->
             "Seguí la línea azul del mapa: es el recorrido por calles."
+        state.mode == GuidanceMode.STREETS && state.routeUi.loading -> "Calculando el recorrido por calles…"
+        state.mode == GuidanceMode.STREETS -> "Seguí la línea del mapa hasta el vehículo (en línea recta, sin recorrido por calles)."
         !state.compassAvailable ->
             "Sin brújula en este teléfono: caminá hacia el ${cardinal(bearing)} (la flecha indica el rumbo con el norte arriba)."
         state.compassUnreliable -> "Calibrá la brújula moviendo el teléfono en forma de 8."

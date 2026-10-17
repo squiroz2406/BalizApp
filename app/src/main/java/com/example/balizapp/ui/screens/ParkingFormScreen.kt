@@ -277,7 +277,7 @@ private fun LocationSection(
                 PositionSource.MANUAL -> "Marcada a mano en el mapa"
                 else -> "Ubicación guardada"
             }
-            listOfNotNull(state.addressText, origin).joinToString(" · ")
+            listOfNotNull(state.addressText ?: "Dirección no disponible (sin conexión)".takeIf { !state.locating && state.position != null }, origin).joinToString(" · ")
         }
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
