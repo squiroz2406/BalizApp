@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,28 +77,31 @@ fun PhotoSlot(
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable(enabled = bitmap != null) { viewing = true },
-            contentAlignment = Alignment.Center,
-        ) {
-            when {
-                processing -> CircularProgressIndicator()
-                bitmap != null -> Image(
-                    bitmap = bitmap,
-                    contentDescription = label,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                else -> Text("Sin foto", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Sin foto no se muestra el recuadro: solo los botones.
+        if (processing || bitmap != null) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable(enabled = bitmap != null) { viewing = true },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = label,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    CircularProgressIndicator()
+                }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-            TextButton(
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
                 onClick = {
                     val uri = newCameraUri(context)
                     pendingCameraUri = uri
@@ -105,7 +109,7 @@ fun PhotoSlot(
                 },
                 enabled = !processing,
             ) { Text("Cámara") }
-            TextButton(
+            OutlinedButton(
                 onClick = {
                     pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
