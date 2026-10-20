@@ -282,7 +282,7 @@ class ParkingFormViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Error leyendo el cartel", e)
-                _state.update { it.copy(analyzingSign = false, error = "No se pudo leer el cartel con IA: ${e.message?.take(300)}") }
+                _state.update { it.copy(analyzingSign = false, error = aiErrorMessage(e, "No se pudo leer el cartel con IA")) }
             }
         }
     }
@@ -304,8 +304,18 @@ class ParkingFormViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Error describiendo el lugar", e)
-                _state.update { it.copy(describingPlace = false, error = "No se pudo describir el lugar con IA: ${e.message?.take(300)}") }
+                _state.update { it.copy(describingPlace = false, error = aiErrorMessage(e, "No se pudo describir el lugar con IA")) }
             }
+        }
+    }
+
+    /** Mensaje corto para el usuario; los errores de cuota se explican sin mostrar el texto crudo de Google. */
+    private fun aiErrorMessage(e: Exception, fallback: String): String {
+        val msg = e.message.orEmpty()
+        return if (msg.contains("quota", ignoreCase = true) || msg.contains("rate limit", ignoreCase = true) || msg.contains("429")) {
+            "La IA no está disponible por ahora (límite de uso alcanzado). Probá en unos minutos o completá los datos a mano."
+        } else {
+            "$fallback: ${msg.take(150)}"
         }
     }
 

@@ -17,7 +17,7 @@ import kotlin.math.max
  * pese menos de [MAX_BYTES] (un documento de Firestore admite hasta 1 MiB).
  */
 object ImageCompressor {
-    const val MAX_SIDE_PX = 1280
+    const val MAX_SIDE_PX = 2048
     const val MAX_BYTES = 700 * 1024
 
     suspend fun compress(context: Context, uri: Uri): ByteArray = withContext(Dispatchers.IO) {

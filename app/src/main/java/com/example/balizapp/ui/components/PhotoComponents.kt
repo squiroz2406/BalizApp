@@ -60,6 +60,7 @@ fun PhotoSlot(
     onPicked: (Uri) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
+    helperText: String? = null,
 ) {
     val context = LocalContext.current
     // Uri del archivo que completa la app de cámara; se guarda por si Android recrea la pantalla.
@@ -77,6 +78,13 @@ fun PhotoSlot(
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
+        if (helperText != null) {
+            Text(
+                helperText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         // Sin foto no se muestra el recuadro: solo los botones.
         if (processing || bitmap != null) {
             Box(

@@ -154,6 +154,8 @@ private fun ColumnScope.FormContent(
         FieldLabel("Fotos")
         PhotoSlot(
             label = "Foto del lugar",
+            helperText = "Subí una foto que muestre dónde dejaste el vehículo, " +
+                    "con comercios, esquinas u otras referencias para reconocerlo al volver.",
             bitmap = state.placePhoto?.bitmap,
             processing = state.processingPhoto == PhotoKind.PLACE,
             onPicked = { vm.onPhotoPicked(PhotoKind.PLACE, it) },
@@ -167,7 +169,9 @@ private fun ColumnScope.FormContent(
             )
         }
         PhotoSlot(
-            label = "Foto del cartel",
+            label = "Foto del cartel de estacionamiento",
+            helperText = "Subí una foto donde se vean los horarios permitidos, " +
+                    "el tiempo máximo de estacionamiento y las demás restricciones.",
             bitmap = state.signPhoto?.bitmap,
             processing = state.processingPhoto == PhotoKind.SIGN,
             onPicked = { vm.onPhotoPicked(PhotoKind.SIGN, it) },

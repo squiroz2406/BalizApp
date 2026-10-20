@@ -23,7 +23,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Sensores | Magnetómetro + acelerómetro (brújula con filtro y corrección por declinación magnética) |
 | Notificaciones | Locales con AlarmManager (exactas, con respaldo inexacto), reprogramadas al reiniciar |
 | Tema | Claro, oscuro o el del sistema (se elige en Perfil); el mapa también se oscurece |
-| Agente de IA | Firebase AI Logic (Gemini 3.8 Flash): lee el cartel, dice si se puede estacionar ahora y describe el lugar |
+| Agente de IA | Firebase AI Logic (Gemini 2.5 Flash): lee el cartel, dice si se puede estacionar ahora y describe el lugar |
 
 ## Cómo ejecutarlo
 

@@ -112,6 +112,6 @@ class SignAnalyzer {
         if (isNull(key)) null else optString(key).trim().ifBlank { null }
 
     private companion object {
-        const val MODEL = "gemini-3.8-flash"
+        const val MODEL = "gemini-2.5-flash"
     }
 }
