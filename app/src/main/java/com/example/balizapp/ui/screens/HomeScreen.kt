@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
@@ -16,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +41,11 @@ import com.example.balizapp.ui.components.formatRemaining
 import com.example.balizapp.ui.components.rememberNow
 import com.example.balizapp.ui.components.toMillis
 
+/** Filtro por estado del estacionamiento en Inicio. */
+private enum class StatusFilter(val label: String) {
+    ALL("Todos"), CURRENT("Actuales"), EXPIRED("Vencidos"), FINISHED("Finalizados")
+}
+
 /** Inicio (RF2): estacionamientos activos arriba, destacados, y el historial debajo. */
 @Composable
 fun HomeScreen(
@@ -45,6 +55,24 @@ fun HomeScreen(
 ) {
     val state by vm.state.collectAsState()
     val now by rememberNow()
+    var vehicleFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    var statusFilter by rememberSaveable { mutableStateOf(StatusFilter.ALL) }
+
+    // Si el vehículo filtrado se borró, vuelve a "todos".
+    val selectedVehicle = vehicleFilter?.takeIf { it in state.vehicles }
+    val matchesVehicle = { p: Parking -> selectedVehicle == null || p.vehicleId == selectedVehicle }
+    val isExpired = { p: Parking -> p.expiresAt != null && p.expiresAt.toMillis() <= now }
+    val active = state.active.filter {
+        matchesVehicle(it) && when (statusFilter) {
+            StatusFilter.ALL -> true
+            StatusFilter.CURRENT -> !isExpired(it)
+            StatusFilter.EXPIRED -> isExpired(it)
+            StatusFilter.FINISHED -> false
+        }
+    }
+    val history = state.history.filter {
+        matchesVehicle(it) && (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED)
+    }
 
     ScreenScaffold(title = "BalizApp") {
         Button(
@@ -68,29 +96,69 @@ fun HomeScreen(
                 text = "Cuando dejes el auto, tocá \"Estacioné aquí\".",
             )
 
-            else -> LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (state.active.isNotEmpty()) {
-                    item { SectionLabel("Estacionado ahora") }
-                    items(state.active, key = { it.id }) { parking ->
-                        ActiveParkingCard(parking, state.vehicles[parking.vehicleId], now) {
-                            onOpenParking(parking.id)
+            else -> {
+                if (state.vehicles.isNotEmpty()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item {
+                            FilterChip(
+                                selected = selectedVehicle == null,
+                                onClick = { vehicleFilter = null },
+                                label = { Text("Todos los vehículos") },
+                            )
+                        }
+                        items(state.vehicles.values.toList(), key = { it.id }) { v ->
+                            FilterChip(
+                                selected = selectedVehicle == v.id,
+                                onClick = { vehicleFilter = v.id },
+                                label = { Text(v.alias.ifBlank { v.type.label }) },
+                            )
                         }
                     }
                 }
-                item { SectionLabel("Historial") }
-                if (state.history.isEmpty()) {
-                    item {
-                        Text(
-                            "Cuando retires el auto, el estacionamiento aparece acá.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(StatusFilter.entries.toList()) { f ->
+                        FilterChip(
+                            selected = statusFilter == f,
+                            onClick = { statusFilter = f },
+                            label = { Text(f.label) },
                         )
                     }
                 }
-                items(state.history, key = { it.id }) { parking ->
-                    HistoryItem(parking, state.vehicles[parking.vehicleId]) { onOpenParking(parking.id) }
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (active.isEmpty() && history.isEmpty()) {
+                        item {
+                            Text(
+                                "No hay estacionamientos con estos filtros.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                        }
+                    }
+                    if (active.isNotEmpty()) {
+                        item { SectionLabel("Estacionado ahora") }
+                        items(active, key = { it.id }) { parking ->
+                            ActiveParkingCard(parking, state.vehicles[parking.vehicleId], now) {
+                                onOpenParking(parking.id)
+                            }
+                        }
+                    }
+                    if (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED) {
+                        item { SectionLabel("Historial") }
+                        if (history.isEmpty() && state.history.isEmpty()) {
+                            item {
+                                Text(
+                                    "Cuando retires el auto, el estacionamiento aparece acá.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        items(history, key = { it.id }) { parking ->
+                            HistoryItem(parking, state.vehicles[parking.vehicleId]) { onOpenParking(parking.id) }
+                        }
+                    }
                 }
             }
         }
