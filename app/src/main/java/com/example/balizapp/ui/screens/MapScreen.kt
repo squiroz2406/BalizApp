@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,7 +76,7 @@ fun MapScreen(vm: MapViewModel, onOpenParking: (String) -> Unit) {
     }
     val selected = (state.active + state.history).firstOrNull { it.id == selectedId }
 
-    ScreenScaffold(title = "Mapa") {
+    ScreenScaffold(title = stringResource(R.string.map_title)) {
         Box(Modifier.weight(1f)) {
             OsmMap(
                 modifier = Modifier.fillMaxSize(),
@@ -97,7 +99,7 @@ fun MapScreen(vm: MapViewModel, onOpenParking: (String) -> Unit) {
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(12.dp),
-                ) { Icon(Icons.Filled.LocationOn, contentDescription = "Centrar en mi ubicación") }
+                ) { Icon(Icons.Filled.LocationOn, contentDescription = stringResource(R.string.map_center_on_me)) }
             }
 
             when {
@@ -115,12 +117,12 @@ fun MapScreen(vm: MapViewModel, onOpenParking: (String) -> Unit) {
                         .padding(12.dp),
                 ) {
                     Text(
-                        "Permití la ubicación para ver dónde estás.",
+                        stringResource(R.string.map_allow_location_prompt),
                         modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(onClick = requestPermission, modifier = Modifier.padding(12.dp)) {
-                        Text("Permitir ubicación")
+                        Text(stringResource(R.string.map_allow_location))
                     }
                 }
             }
@@ -144,20 +146,20 @@ private fun SelectedParkingCard(
     ) {
         Row(Modifier.padding(start = 16.dp, top = 8.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(vehicleName ?: "Estacionamiento", style = MaterialTheme.typography.titleMedium)
+                Text(vehicleName ?: stringResource(R.string.map_parking_default), style = MaterialTheme.typography.titleMedium)
                 Text(
                     listOfNotNull(
-                        if (active) "Estacionado ahora" else formatDateTime(parking.startedAt),
+                        if (active) stringResource(R.string.map_parked_now) else formatDateTime(parking.startedAt),
                         parking.summaryLine(),
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Cerrar") }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.map_close)) }
         }
         Button(onClick = onOpen, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 4.dp)) {
-            Text("Ver detalle")
+            Text(stringResource(R.string.map_view_detail))
         }
     }
 }

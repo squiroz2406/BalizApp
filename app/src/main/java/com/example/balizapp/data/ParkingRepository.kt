@@ -1,5 +1,7 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.util.Log
 import com.example.balizapp.data.model.Parking
 import com.example.balizapp.data.model.ParkingStatus
@@ -23,7 +25,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** El vehículo elegido ya tiene un estacionamiento activo (regla: uno activo por vehículo). */
-class ActiveParkingExistsException : IllegalStateException("Ese vehículo ya tiene un estacionamiento activo")
+class ActiveParkingExistsException : IllegalStateException(AppLocale.str(R.string.form_err_active_exists))
 
 /** Estacionamientos del usuario: users/{uid}/parkings. */
 class ParkingRepository(
@@ -33,7 +35,7 @@ class ParkingRepository(
 ) {
     private fun parkings(uid: String) = db.collection("users").document(uid).collection("parkings")
 
-    private fun requireUid(): String = auth.currentUser?.uid ?: error("No hay sesión iniciada")
+    private fun requireUid(): String = auth.currentUser?.uid ?: error(AppLocale.str(R.string.form_err_no_session))
 
     /** Estacionamientos activos (uno por vehículo como máximo), más recientes primero. */
     fun observeActive(): Flow<List<Parking>> = observeByStatus(ParkingStatus.ACTIVE)

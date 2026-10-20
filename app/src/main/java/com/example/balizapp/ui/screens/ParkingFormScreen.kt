@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.example.balizapp.R
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -98,7 +100,7 @@ fun ParkingFormScreen(
     }
 
     ScreenScaffold(
-        title = if (state.isEdit) "Editar estacionamiento" else "Nuevo estacionamiento",
+        title = stringResource(if (state.isEdit) R.string.form_title_edit else R.string.form_title_new),
         onBack = onBack,
     ) {
         when {
@@ -128,9 +130,9 @@ fun ParkingFormScreen(
 private fun NoVehiclesCard(onGoToProfile: () -> Unit) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Primero cargá un vehículo", style = MaterialTheme.typography.titleMedium)
-            Text("Lo hacés una sola vez, desde Perfil → Mis vehículos.")
-            Button(onClick = onGoToProfile) { Text("Ir a Perfil") }
+            Text(stringResource(R.string.form_no_vehicles_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.form_no_vehicles_body))
+            Button(onClick = onGoToProfile) { Text(stringResource(R.string.form_go_to_profile)) }
         }
     }
 }
@@ -151,11 +153,10 @@ private fun ColumnScope.FormContent(
     ) {
         LocationSection(state, vm, onRequestLocationPermission)
 
-        FieldLabel("Fotos")
+        FieldLabel(stringResource(R.string.form_section_photos))
         PhotoSlot(
-            label = "Foto del lugar",
-            helperText = "Subí una foto que muestre dónde dejaste el vehículo, " +
-                    "con comercios, esquinas u otras referencias para reconocerlo al volver.",
+            label = stringResource(R.string.form_place_photo_label),
+            helperText = stringResource(R.string.form_place_photo_helper),
             bitmap = state.placePhoto?.bitmap,
             processing = state.processingPhoto == PhotoKind.PLACE,
             onPicked = { vm.onPhotoPicked(PhotoKind.PLACE, it) },
@@ -163,15 +164,14 @@ private fun ColumnScope.FormContent(
         )
         if (state.placePhoto != null) {
             AiButton(
-                label = "Describir el lugar con IA",
+                label = stringResource(R.string.form_describe_place_ai),
                 working = state.describingPlace,
                 onClick = vm::describePlace,
             )
         }
         PhotoSlot(
-            label = "Foto del cartel de estacionamiento",
-            helperText = "Subí una foto donde se vean los horarios permitidos, " +
-                    "el tiempo máximo de estacionamiento y las demás restricciones.",
+            label = stringResource(R.string.form_sign_photo_label),
+            helperText = stringResource(R.string.form_sign_photo_helper),
             bitmap = state.signPhoto?.bitmap,
             processing = state.processingPhoto == PhotoKind.SIGN,
             onPicked = { vm.onPhotoPicked(PhotoKind.SIGN, it) },
@@ -179,14 +179,14 @@ private fun ColumnScope.FormContent(
         )
         if (state.signPhoto != null) {
             AiButton(
-                label = "Leer el cartel con IA",
+                label = stringResource(R.string.form_read_sign_ai),
                 working = state.analyzingSign,
                 onClick = vm::analyzeSign,
             )
         }
         state.signAnalysis?.let { SignVerdictCard(it) }
 
-        FieldLabel("Vehículo")
+        FieldLabel(stringResource(R.string.form_section_vehicle))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             state.vehicles.forEach { vehicle ->
                 FilterChip(
@@ -198,12 +198,12 @@ private fun ColumnScope.FormContent(
             }
         }
 
-        FieldLabel("Límite de tiempo")
+        FieldLabel(stringResource(R.string.form_section_time_limit))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = state.selectedPreset == ParkingFormState.NO_LIMIT,
                 onClick = vm::setNoLimit,
-                label = { Text("Sin límite") },
+                label = { Text(stringResource(R.string.form_no_limit)) },
             )
             ParkingFormState.PRESETS_MINUTES.forEach { minutes ->
                 FilterChip(
@@ -215,26 +215,26 @@ private fun ColumnScope.FormContent(
             FilterChip(
                 selected = state.expiresAt != null && state.selectedPreset == null,
                 onClick = onShowTimeDialog,
-                label = { Text("Elegir hora") },
+                label = { Text(stringResource(R.string.form_pick_time)) },
             )
         }
         Text(
-            state.expiresAt?.let { "Vence: ${formatDateTime(it)}. Te avisamos antes y al vencer." }
-                ?: "Sin vencimiento: no se programa aviso",
+            state.expiresAt?.let { stringResource(R.string.form_expires_info, formatDateTime(it)) }
+                ?: stringResource(R.string.form_no_expiry_info),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         OutlinedTextField(
             value = state.ruleSummary,
             onValueChange = vm::setRuleSummary,
-            label = { Text("Regla del cartel (opcional)") },
-            placeholder = { Text("Medido, máx. 2 h, lun a vie de 8 a 18") },
+            label = { Text(stringResource(R.string.form_rule_label)) },
+            placeholder = { Text(stringResource(R.string.form_rule_placeholder)) },
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = state.levelSector,
             onValueChange = vm::setLevelSector,
-            label = { Text("Piso, sector o cochera (opcional)") },
+            label = { Text(stringResource(R.string.form_level_label)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
             modifier = Modifier.fillMaxWidth(),
@@ -242,8 +242,8 @@ private fun ColumnScope.FormContent(
         OutlinedTextField(
             value = state.note,
             onValueChange = vm::setNote,
-            label = { Text("Nota (opcional)") },
-            placeholder = { Text("Frente a la farmacia") },
+            label = { Text(stringResource(R.string.form_note_label)) },
+            placeholder = { Text(stringResource(R.string.form_note_placeholder)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -259,7 +259,7 @@ private fun ColumnScope.FormContent(
             .height(52.dp),
     ) {
         if (state.saving) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-        else Text(if (state.isEdit) "Guardar cambios" else "Guardar estacionamiento")
+        else Text(stringResource(if (state.isEdit) R.string.form_save_changes else R.string.form_save_parking))
     }
 }
 
@@ -270,7 +270,7 @@ private fun LocationSection(
     vm: ParkingFormViewModel,
     onRequestLocationPermission: () -> Unit,
 ) {
-    FieldLabel("Ubicación")
+    FieldLabel(stringResource(R.string.form_section_location))
     val point = state.position?.let { MapPoint(it.latitude, it.longitude) }
     ParkingMiniMap(
         position = point,
@@ -278,18 +278,19 @@ private fun LocationSection(
         onMapClick = { vm.setManualPosition(it.latitude, it.longitude) },
     )
     val status = when {
-        state.locating -> "Buscando tu ubicación…"
+        state.locating -> stringResource(R.string.form_locating)
         state.position == null && !state.hasLocationPermission ->
-            "Sin permiso de ubicación. Permitilo o tocá el mapa donde dejaste el vehículo."
-        state.position == null -> "Tocá el mapa donde dejaste el vehículo."
+            stringResource(R.string.form_no_permission_hint)
+        state.position == null -> stringResource(R.string.form_tap_map_hint)
         else -> {
             val origin = when (state.positionSource) {
                 PositionSource.GPS -> state.position.accuracyMeters
-                    ?.let { "Tomada por GPS (±${it.roundToInt()} m)" } ?: "Tomada por GPS"
-                PositionSource.MANUAL -> "Marcada a mano en el mapa"
-                else -> "Ubicación guardada"
+                    ?.let { stringResource(R.string.form_source_gps_accuracy, it.roundToInt()) }
+                        ?: stringResource(R.string.form_source_gps)
+                PositionSource.MANUAL -> stringResource(R.string.form_source_manual)
+                else -> stringResource(R.string.form_source_saved)
             }
-            listOfNotNull(state.addressText ?: "Dirección no disponible (sin conexión)".takeIf { !state.locating && state.position != null }, origin).joinToString(" · ")
+            listOfNotNull(state.addressText ?: stringResource(R.string.form_address_unavailable).takeIf { !state.locating && state.position != null }, origin).joinToString(" · ")
         }
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -304,9 +305,9 @@ private fun LocationSection(
             modifier = Modifier.weight(1f),
         )
         if (state.hasLocationPermission) {
-            TextButton(onClick = vm::locate, enabled = !state.locating) { Text("Usar GPS") }
+            TextButton(onClick = vm::locate, enabled = !state.locating) { Text(stringResource(R.string.form_use_gps)) }
         } else {
-            TextButton(onClick = onRequestLocationPermission) { Text("Permitir") }
+            TextButton(onClick = onRequestLocationPermission) { Text(stringResource(R.string.form_allow)) }
         }
     }
 }
@@ -317,7 +318,7 @@ private fun AiButton(label: String, working: Boolean, onClick: () -> Unit) {
         if (working) {
             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
-            Text("Analizando…")
+            Text(stringResource(R.string.form_analyzing))
         } else {
             Text(label)
         }
@@ -328,18 +329,18 @@ private fun AiButton(label: String, working: Boolean, onClick: () -> Unit) {
 @Composable
 private fun SignVerdictCard(analysis: SignAnalysis) {
     val (title, color) = when (analysis.verdict) {
-        ParkingVerdict.ALLOWED -> "Ahora se puede estacionar" to MaterialTheme.colorScheme.primary
-        ParkingVerdict.FORBIDDEN -> "Ahora NO se puede estacionar" to MaterialTheme.colorScheme.error
-        ParkingVerdict.UNKNOWN -> "No pude saber si se puede estacionar" to MaterialTheme.colorScheme.onSurfaceVariant
+        ParkingVerdict.ALLOWED -> stringResource(R.string.form_verdict_allowed) to MaterialTheme.colorScheme.primary
+        ParkingVerdict.FORBIDDEN -> stringResource(R.string.form_verdict_forbidden) to MaterialTheme.colorScheme.error
+        ParkingVerdict.UNKNOWN -> stringResource(R.string.form_verdict_unknown) to MaterialTheme.colorScheme.onSurfaceVariant
     }
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = MaterialTheme.typography.titleSmall, color = color)
             analysis.explanation?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Text(
-                "Completé la regla y el vencimiento con lo que leí" +
-                    (if (analysis.confidence == "high") "." else " (con poca seguridad)") +
-                    " Revisalos antes de guardar: la IA puede equivocarse.",
+                stringResource(
+                    if (analysis.confidence == "high") R.string.form_ai_review_note else R.string.form_ai_review_note_low,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -363,11 +364,11 @@ private fun ExpiryTimeDialog(onDismiss: () -> Unit, onConfirm: (hour: Int, minut
     )
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("¿Hasta qué hora podés quedarte?") },
+        title = { Text(stringResource(R.string.form_time_dialog_title)) },
         text = { TimeInput(state = timeState) },
         confirmButton = {
-            TextButton(onClick = { onConfirm(timeState.hour, timeState.minute) }) { Text("Aceptar") }
+            TextButton(onClick = { onConfirm(timeState.hour, timeState.minute) }) { Text(stringResource(R.string.form_accept)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.form_cancel)) } },
     )
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_error_no_session">You\'re not signed in</string>
+    <string name="profile_error_vehicle_name_required">Enter a name for the vehicle</string>
+    <string name="profile_error_vehicle_active_parking">That vehicle has an active parking. Remove it before deleting the vehicle.</string>
+    <string name="profile_error_save_failed">Couldn\'t save: %1$s</string>
+</resources>

@@ -1,5 +1,7 @@
 package com.example.balizapp.notifications
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -72,7 +74,7 @@ class ReminderScheduler(context: Context) {
 
     /** Aviso de prueba en [seconds] segundos, para verificar permisos y la demo. */
     fun scheduleTest(seconds: Int = 10) {
-        val spec = Spec(TEST_ID, System.currentTimeMillis() + 15 * 60_000L, 15, "Prueba", "Aviso de prueba")
+        val spec = Spec(TEST_ID, System.currentTimeMillis() + 15 * 60_000L, 15, AppLocale.str(R.string.notif_test_vehicle), AppLocale.str(R.string.notif_test_place))
         setAlarm(System.currentTimeMillis() + seconds * 1000L, pendingIntent(spec, Kind.WARNING))
     }
 

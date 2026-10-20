@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_error_no_session">Você não está logado</string>
+    <string name="profile_error_vehicle_name_required">Digite um nome para o veículo</string>
+    <string name="profile_error_vehicle_active_parking">Esse veículo tem um estacionamento ativo. Retire-o antes de excluir.</string>
+    <string name="profile_error_save_failed">Não foi possível salvar: %1$s</string>
+</resources>

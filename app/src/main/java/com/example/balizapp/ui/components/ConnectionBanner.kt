@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.components
 
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
 import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -45,8 +47,8 @@ fun ConnectionBanner(vm: ConnectionViewModel, modifier: Modifier = Modifier) {
     AnimatedVisibility(visible = status != SyncStatus.ONLINE, modifier = modifier) {
         val offline = status == SyncStatus.OFFLINE
         Text(
-            if (offline) "Sin conexión. Tus cambios se guardan en el teléfono y se sincronizan al volver la red."
-            else "Sincronizando cambios…",
+            if (offline) stringResource(R.string.map_banner_offline)
+            else stringResource(R.string.map_banner_syncing),
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             color = if (offline) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer,

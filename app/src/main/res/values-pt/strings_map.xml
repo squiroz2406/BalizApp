@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="map_title">Mapa</string>
+    <string name="map_center_on_me">Centralizar na minha localização</string>
+    <string name="map_allow_location_prompt">Permita a localização para ver onde você está.</string>
+    <string name="map_allow_location">Permitir localização</string>
+    <string name="map_parking_default">Estacionamento</string>
+    <string name="map_parked_now">Estacionado agora</string>
+    <string name="map_close">Fechar</string>
+    <string name="map_view_detail">Ver detalhes</string>
+    <string name="map_banner_offline">Sem conexão. Suas alterações ficam salvas no celular e são sincronizadas quando a rede voltar.</string>
+    <string name="map_banner_syncing">Sincronizando alterações…</string>
+</resources>

@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.R
+import com.example.balizapp.i18n.AppLocale
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -79,9 +81,9 @@ class ParkingDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             .getOrNull()
 
     /** "Ya lo retiré": pasa al historial. El listener actualiza la pantalla. */
-    fun finish() = perform("No se pudo marcar como retirado") { parkingRepo.finish(parkingId) }
+    fun finish() = perform(AppLocale.str(R.string.detail_error_finish)) { parkingRepo.finish(parkingId) }
 
-    fun delete() = perform("No se pudo borrar") {
+    fun delete() = perform(AppLocale.str(R.string.detail_error_delete)) {
         parkingRepo.delete(parkingId)
         ui.update { it.copy(closed = true) }
     }

@@ -1,5 +1,6 @@
 package com.example.balizapp.notifications
 
+import com.example.balizapp.i18n.AppLocale
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -22,14 +23,14 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val parkingId = intent.getStringExtra(EXTRA_PARKING_ID) ?: return
         val expired = intent.action?.endsWith(ReminderScheduler.Kind.EXPIRED.name) == true
-        val vehicle = intent.getStringExtra(EXTRA_VEHICLE) ?: "Tu vehículo"
+        val vehicle = intent.getStringExtra(EXTRA_VEHICLE) ?: AppLocale.str(R.string.core_your_vehicle)
         val place = intent.getStringExtra(EXTRA_PLACE)
         val expiresAt = intent.getLongExtra(EXTRA_EXPIRES_AT, 0L)
 
         val minutesLeft = ((expiresAt - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0)
-        val title = if (expired) "Venció el estacionamiento de $vehicle"
-        else "Al estacionamiento de $vehicle le quedan $minutesLeft min"
-        val text = listOfNotNull(place, "Tocá para volver al vehículo").joinToString(" · ")
+        val title = if (expired) AppLocale.str(R.string.notif_title_expired, vehicle)
+        else AppLocale.str(R.string.notif_title_warning, vehicle, minutesLeft.toInt())
+        val text = listOfNotNull(place, AppLocale.str(R.string.notif_tap_to_return)).joinToString(" · ")
 
         Notifications.show(context, parkingId, title, text, highPriority = expired)
     }
@@ -62,9 +63,9 @@ object Notifications {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Vencimiento del estacionamiento",
+            AppLocale.str(R.string.notif_channel_name),
             NotificationManager.IMPORTANCE_HIGH,
-        ).apply { description = "Aviso antes de que venza el tiempo de estacionamiento y al vencer" }
+        ).apply { description = AppLocale.str(R.string.notif_channel_description) }
         ContextCompat.getSystemService(context, NotificationManager::class.java)?.createNotificationChannel(channel)
     }
 
@@ -98,7 +99,7 @@ object Notifications {
             .setPriority(if (highPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(contentIntent)
-            .addAction(0, "Volver al auto", contentIntent)
+            .addAction(0, AppLocale.str(R.string.notif_action_return), contentIntent)
             .setAutoCancel(true)
             .build()
 

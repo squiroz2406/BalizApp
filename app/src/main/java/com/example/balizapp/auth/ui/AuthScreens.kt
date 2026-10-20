@@ -28,9 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.balizapp.R
 import com.example.balizapp.auth.AuthStatus
 import com.example.balizapp.auth.AuthUiState
 import com.example.balizapp.auth.AuthViewModel
@@ -87,19 +89,19 @@ private fun LoginScreen(state: AuthUiState, vm: AuthViewModel, onRegister: () ->
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-    AuthLayout("Iniciar sesión", state) {
+    AuthLayout(stringResource(R.string.auth_title_login), state) {
         EmailField(email) { email = it }
-        PasswordField("Contraseña", password) { password = it }
+        PasswordField(stringResource(R.string.auth_password), password) { password = it }
         Button({ vm.signIn(email, password) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Ingresar")
+            Text(stringResource(R.string.auth_login_button))
         }
-        TextButton(onForgot, Modifier.align(Alignment.End)) { Text("¿Olvidaste tu contraseña?") }
+        TextButton(onForgot, Modifier.align(Alignment.End)) { Text(stringResource(R.string.auth_forgot_link)) }
         OrDivider()
         OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Continuar con Google")
+            Text(stringResource(R.string.auth_continue_google))
         }
         TextButton(onRegister, Modifier.align(Alignment.CenterHorizontally)) {
-            Text("¿No tenés cuenta? Registrate")
+            Text(stringResource(R.string.auth_register_link))
         }
     }
 }
@@ -111,23 +113,23 @@ private fun RegisterScreen(state: AuthUiState, vm: AuthViewModel, onBack: () -> 
     var password by rememberSaveable { mutableStateOf("") }
     var confirm by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-    AuthLayout("Crear cuenta", state) {
+    AuthLayout(stringResource(R.string.auth_title_register), state) {
         OutlinedTextField(
             name, { name = it }, Modifier.fillMaxWidth(),
-            label = { Text("Nombre") }, singleLine = true,
+            label = { Text(stringResource(R.string.auth_name)) }, singleLine = true,
         )
         EmailField(email) { email = it }
-        PasswordField("Contraseña", password) { password = it }
-        PasswordField("Repetir contraseña", confirm) { confirm = it }
+        PasswordField(stringResource(R.string.auth_password), password) { password = it }
+        PasswordField(stringResource(R.string.auth_repeat_password), confirm) { confirm = it }
         Button({ vm.register(name, email, password, confirm) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Registrarme")
+            Text(stringResource(R.string.auth_register_button))
         }
         OrDivider()
         OutlinedButton({ vm.signInWithGoogle(context.findFragmentActivity()) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Registrarme con Google")
+            Text(stringResource(R.string.auth_register_google))
         }
         TextButton(onBack, Modifier.align(Alignment.CenterHorizontally)) {
-            Text("¿Ya tenés cuenta? Iniciá sesión")
+            Text(stringResource(R.string.auth_have_account_link))
         }
     }
 }
@@ -135,29 +137,29 @@ private fun RegisterScreen(state: AuthUiState, vm: AuthViewModel, onBack: () -> 
 @Composable
 private fun ForgotScreen(state: AuthUiState, vm: AuthViewModel, onBack: () -> Unit) {
     var email by rememberSaveable { mutableStateOf("") }
-    AuthLayout("Restablecer contraseña", state) {
-        Text("Te enviaremos un enlace para crear una nueva contraseña.")
+    AuthLayout(stringResource(R.string.auth_title_reset), state) {
+        Text(stringResource(R.string.auth_reset_info))
         EmailField(email) { email = it }
         Button({ vm.sendPasswordReset(email) }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Enviar enlace")
+            Text(stringResource(R.string.auth_send_link))
         }
-        TextButton(onBack, Modifier.align(Alignment.CenterHorizontally)) { Text("Volver") }
+        TextButton(onBack, Modifier.align(Alignment.CenterHorizontally)) { Text(stringResource(R.string.auth_back)) }
     }
 }
 
 @Composable
 private fun VerifyScreen(state: AuthUiState, vm: AuthViewModel) {
     val context = LocalContext.current
-    AuthLayout("Verificá tu correo", state) {
-        Text("Enviamos un enlace de verificación a ${state.userEmail}. Abrilo y luego tocá el botón.")
+    AuthLayout(stringResource(R.string.auth_title_verify), state) {
+        Text(stringResource(R.string.auth_verify_info, state.userEmail.orEmpty()))
         Button({ vm.checkVerified() }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Ya verifiqué mi correo")
+            Text(stringResource(R.string.auth_verified_button))
         }
         OutlinedButton({ vm.resendVerification() }, Modifier.fillMaxWidth(), enabled = !state.busy) {
-            Text("Reenviar correo")
+            Text(stringResource(R.string.auth_resend))
         }
         TextButton({ vm.signOut(context) }, Modifier.align(Alignment.CenterHorizontally)) {
-            Text("Cerrar sesión")
+            Text(stringResource(R.string.auth_sign_out))
         }
     }
 }
@@ -165,7 +167,7 @@ private fun VerifyScreen(state: AuthUiState, vm: AuthViewModel) {
 @Composable
 private fun EmailField(value: String, onChange: (String) -> Unit) = OutlinedTextField(
     value, onChange, Modifier.fillMaxWidth(),
-    label = { Text("Correo electrónico") }, singleLine = true,
+    label = { Text(stringResource(R.string.auth_email)) }, singleLine = true,
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
 )
 
@@ -181,5 +183,5 @@ private fun PasswordField(label: String, value: String, onChange: (String) -> Un
 private fun ColumnScope.OrDivider() {
     Spacer(Modifier.height(4.dp))
     HorizontalDivider()
-    Text("o", Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.bodySmall)
+    Text(stringResource(R.string.auth_or), Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.bodySmall)
 }

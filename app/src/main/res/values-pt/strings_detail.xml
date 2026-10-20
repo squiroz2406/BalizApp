@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Detalhes</string>
+    <string name="detail_not_found_title">Estacionamento não encontrado</string>
+    <string name="detail_not_found_text">Pode ter sido apagado.</string>
+    <string name="detail_vehicle_default">Veículo</string>
+    <string name="detail_label_address">Endereço</string>
+    <string name="detail_label_since">Desde</string>
+    <string name="detail_label_finished">Retirado</string>
+    <string name="detail_label_level_sector">Andar ou setor</string>
+    <string name="detail_label_note">Nota</string>
+    <string name="detail_label_rule">Regra da placa</string>
+    <string name="detail_label_plate">Placa</string>
+    <string name="detail_return_to_car">Voltar ao carro</string>
+    <string name="detail_edit">Editar</string>
+    <string name="detail_finish">Já retirei</string>
+    <string name="detail_delete_history">Apagar do histórico</string>
+    <string name="detail_confirm_finish_title">Você já retirou o veículo?</string>
+    <string name="detail_confirm_finish_text">O estacionamento vai para o histórico.</string>
+    <string name="detail_confirm_finish_ok">Sim, retirei</string>
+    <string name="detail_confirm_delete_title">Apagar este registro?</string>
+    <string name="detail_confirm_delete_text">Será removido do histórico e não poderá ser desfeito.</string>
+    <string name="detail_confirm_delete_ok">Apagar</string>
+    <string name="detail_cancel">Cancelar</string>
+    <string name="detail_time_lasted">Ficou por %1$s</string>
+    <string name="detail_time_no_limit">Sem limite de tempo</string>
+    <string name="detail_time_parked_ago">Estacionado há %1$s</string>
+    <string name="detail_time_expires">Vence %1$s</string>
+    <string name="detail_photo_place">Foto do local</string>
+    <string name="detail_photo_sign">Foto da placa</string>
+    <string name="detail_error_finish">Não foi possível marcar como retirado</string>
+    <string name="detail_error_delete">Não foi possível apagar</string>
+</resources>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_title">Zurück zum Auto</string>
+    <string name="nav_not_found_title">Parkplatz nicht gefunden</string>
+    <string name="nav_not_found_text">Er wurde möglicherweise gelöscht oder hat keinen gespeicherten Standort.</string>
+    <string name="nav_finish">Abgeholt</string>
+    <string name="nav_no_location">Kein Standort</string>
+    <string name="nav_searching_position">Deine Position wird gesucht…</string>
+    <string name="nav_arrived">Du bist da!</string>
+    <string name="nav_gps_low_accuracy">GPS ungenau (±%1$d m)</string>
+    <string name="nav_allow_location">Standort erlauben</string>
+    <string name="nav_guide_no_permission">Erlaube den Standortzugriff, um die Gehrichtung zu berechnen.</string>
+    <string name="nav_guide_arrived">Du bist weniger als %1$d m vom Fahrzeug entfernt.</string>
+    <string name="nav_guide_waiting_gps">Warte auf GPS…</string>
+    <string name="nav_guide_follow_blue_line">Folge der blauen Linie auf der Karte: Das ist der Weg über die Straßen.</string>
+    <string name="nav_calculating_route">Straßenroute wird berechnet…</string>
+    <string name="nav_guide_follow_line_straight">Folge der Linie auf der Karte zum Fahrzeug (Luftlinie, keine Straßenroute).</string>
+    <string name="nav_guide_no_compass">Kein Kompass auf diesem Handy: Geh Richtung %1$s (der Pfeil zeigt die Richtung, Norden oben).</string>
+    <string name="nav_guide_calibrate">Kalibriere den Kompass, indem du das Handy in einer Acht bewegst.</string>
+    <string name="nav_guide_compass">Halte das Handy waagrecht und geh in Richtung des Pfeils (%1$s).</string>
+    <string name="nav_mode_direct">Direkt</string>
+    <string name="nav_mode_streets">Über Straßen</string>
+    <string name="nav_route_summary">über Straßen · etwa %1$d Min. zu Fuß</string>
+    <string name="nav_straight_distance">Luftlinie: %1$s</string>
+    <string name="nav_updating_route">Route wird aktualisiert…</string>
+    <string name="nav_recalculate">Neu berechnen</string>
+    <string name="nav_attribution">Route: OSRM (FOSSGIS) mit Daten von © OpenStreetMap · Karte korrigieren</string>
+    <string name="nav_vehicle_default">Dein Fahrzeug</string>
+    <string name="nav_level_sector">Etage / Bereich: %1$s</string>
+    <string name="nav_open_maps">In Maps öffnen</string>
+    <string name="nav_cardinal_n">Norden</string>
+    <string name="nav_cardinal_ne">Nordosten</string>
+    <string name="nav_cardinal_e">Osten</string>
+    <string name="nav_cardinal_se">Südosten</string>
+    <string name="nav_cardinal_s">Süden</string>
+    <string name="nav_cardinal_sw">Südwesten</string>
+    <string name="nav_cardinal_w">Westen</string>
+    <string name="nav_cardinal_nw">Nordwesten</string>
+    <string name="nav_route_error_retry">Route konnte nicht berechnet werden. Neuer Versuch in einigen Sekunden.</string>
+    <string name="nav_route_error_offline">Keine Verbindung: Die Straßenroute kann nicht berechnet werden. Es wird die Luftlinie zum Fahrzeug angezeigt.</string>
+    <string name="nav_route_saved_offline">Keine Verbindung: Die zuletzt gespeicherte Straßenroute wird verwendet.</string>
+    <string name="nav_finish_error">Konnte nicht als abgeholt markiert werden: %1$s</string>
+</resources>

@@ -1,5 +1,11 @@
 package com.example.balizapp.ui.screens
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.app.Activity
+import com.example.balizapp.i18n.AppLanguage
+import com.example.balizapp.i18n.AppLocale
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -73,7 +79,7 @@ fun ProfileScreen(
     // null = diálogo cerrado; Vehicle() = alta; Vehicle con id = edición
     var editing by remember { mutableStateOf<Vehicle?>(null) }
 
-    ScreenScaffold(title = "Perfil") {
+    ScreenScaffold(title = stringResource(R.string.profile_title)) {
         Column(
             Modifier
                 .weight(1f)
@@ -83,10 +89,10 @@ fun ProfileScreen(
             Header(name = state.profile?.displayName ?: userName, email = userEmail)
             HorizontalDivider()
 
-            SectionTitle("Mis vehículos")
+            SectionTitle(stringResource(R.string.profile_my_vehicles))
             if (state.vehicles.isEmpty() && !state.loading) {
                 Text(
-                    "Todavía no cargaste ningún vehículo.",
+                    stringResource(R.string.profile_no_vehicles),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -94,28 +100,28 @@ fun ProfileScreen(
                 ListItem(
                     headlineContent = { Text(vehicle.alias) },
                     supportingContent = {
-                        Text(listOfNotNull(vehicle.type.label, vehicle.plate).joinToString(" · "))
+                        Text(listOfNotNull(stringResource(vehicle.type.labelRes), vehicle.plate).joinToString(" · "))
                     },
                     leadingContent = { VehicleIcon(vehicle.type) },
                     trailingContent = {
-                        TextButton(onClick = { editing = vehicle }) { Text("Editar") }
+                        TextButton(onClick = { editing = vehicle }) { Text(stringResource(R.string.profile_edit)) }
                     },
                 )
             }
             OutlinedButton(onClick = { editing = Vehicle() }) {
                 Icon(Icons.Filled.Add, contentDescription = null)
-                Text("  Agregar vehículo")
+                Text("  " + stringResource(R.string.profile_add_vehicle))
             }
 
             HorizontalDivider()
-            SectionTitle("Aviso antes del vencimiento")
+            SectionTitle(stringResource(R.string.profile_reminder_title))
             val current = state.profile?.reminderMinutes ?: UserProfile.DEFAULT_REMINDER_MINUTES
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 UserProfile.REMINDER_OPTIONS.forEach { minutes ->
                     FilterChip(
                         selected = minutes == current,
                         onClick = { vm.setReminderMinutes(minutes) },
-                        label = { Text("$minutes min") },
+                        label = { Text(stringResource(R.string.profile_minutes, minutes)) },
                     )
                 }
             }
@@ -123,28 +129,47 @@ fun ProfileScreen(
             AlertsStatus()
 
             HorizontalDivider()
-            SectionTitle("Apariencia")
+            SectionTitle(stringResource(R.string.profile_language))
+            val context = LocalContext.current
+            val currentLanguage = remember { AppLocale.language(context) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppLanguage.entries.forEach { language ->
+                    FilterChip(
+                        selected = language == currentLanguage,
+                        onClick = {
+                            if (language != currentLanguage) {
+                                AppLocale.set(context, language)
+                                context.findActivity()?.recreate()
+                            }
+                        },
+                        label = { Text(language.nativeName) },
+                    )
+                }
+            }
+
+            HorizontalDivider()
+            SectionTitle(stringResource(R.string.profile_appearance))
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 ThemeMode.entries.forEachIndexed { index, option ->
                     SegmentedButton(
                         selected = themeMode == option,
                         onClick = { onThemeModeChange(option) },
                         shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
-                    ) { Text(option.label) }
+                    ) { Text(stringResource(option.labelRes)) }
                 }
             }
 
             state.error?.let { msg ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
-                    TextButton(onClick = vm::clearError) { Text("Cerrar") }
+                    TextButton(onClick = vm::clearError) { Text(stringResource(R.string.profile_close)) }
                 }
             }
         }
 
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
-            Text("  Cerrar sesión")
+            Text("  " + stringResource(R.string.profile_sign_out))
         }
     }
 
@@ -182,7 +207,7 @@ private fun AlertsStatus() {
 
     if (!canNotify) {
         Text(
-            "Las notificaciones están desactivadas: no vas a recibir los avisos.",
+            stringResource(R.string.profile_notifications_off),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
         )
@@ -195,11 +220,11 @@ private fun AlertsStatus() {
                         .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                 )
             }
-        }) { Text("Activar notificaciones") }
+        }) { Text(stringResource(R.string.profile_enable_notifications)) }
     }
     if (!canExact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Text(
-            "Sin \"Alarmas y recordatorios\" el aviso puede llegar unos minutos tarde.",
+            stringResource(R.string.profile_exact_alarms_hint),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
@@ -207,12 +232,12 @@ private fun AlertsStatus() {
             context.startActivity(
                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
             )
-        }) { Text("Permitir alarmas exactas") }
+        }) { Text(stringResource(R.string.profile_allow_exact_alarms)) }
     }
     TextButton(
         onClick = { scheduler.scheduleTest(seconds = 10); testSent = true },
         enabled = canNotify,
-    ) { Text(if (testSent) "Aviso de prueba programado (10 s)" else "Enviar un aviso de prueba") }
+    ) { Text(stringResource(if (testSent) R.string.profile_test_sent else R.string.profile_send_test)) }
 }
 
 @Composable
@@ -230,7 +255,7 @@ private fun Header(name: String?, email: String?) {
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(72.dp),
         )
-        Text(name ?: "Sin nombre", style = MaterialTheme.typography.titleLarge)
+        Text(name ?: stringResource(R.string.profile_no_name), style = MaterialTheme.typography.titleLarge)
         email?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
@@ -246,7 +271,7 @@ fun VehicleIcon(type: VehicleType) {
         VehicleType.CAR -> R.drawable.ic_car
         VehicleType.MOTORCYCLE -> R.drawable.ic_motorcycle
     }
-    Icon(painterResource(icon), contentDescription = type.label)
+    Icon(painterResource(icon), contentDescription = stringResource(type.labelRes))
 }
 
 /**
@@ -271,7 +296,7 @@ private fun VehicleDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isNew) "Nuevo vehículo" else "Editar vehículo") },
+        title = { Text(stringResource(if (isNew) R.string.profile_new_vehicle else R.string.profile_edit_vehicle)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -281,13 +306,13 @@ private fun VehicleDialog(
                             onClick = { type = option },
                             shape = SegmentedButtonDefaults.itemShape(index, VehicleType.entries.size),
                             icon = { VehicleIcon(option) },
-                        ) { Text(option.label) }
+                        ) { Text(stringResource(option.labelRes)) }
                     }
                 }
                 OutlinedTextField(
                     value = alias,
                     onValueChange = { alias = it; error = null },
-                    label = { Text("Nombre (por ejemplo, Mi Gol)") },
+                    label = { Text(stringResource(R.string.profile_vehicle_name)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier.fillMaxWidth(),
@@ -295,7 +320,7 @@ private fun VehicleDialog(
                 OutlinedTextField(
                     value = plate,
                     onValueChange = { plate = it.uppercase() },
-                    label = { Text("Patente (opcional)") },
+                    label = { Text(stringResource(R.string.profile_vehicle_plate)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                     modifier = Modifier.fillMaxWidth(),
@@ -308,7 +333,7 @@ private fun VehicleDialog(
                         },
                     ) {
                         Text(
-                            if (confirmDelete) "Tocá de nuevo para confirmar" else "Eliminar vehículo",
+                            stringResource(if (confirmDelete) R.string.profile_confirm_delete else R.string.profile_delete_vehicle),
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
@@ -319,8 +344,15 @@ private fun VehicleDialog(
             TextButton(onClick = {
                 val result = onSave(type, alias, plate)
                 if (result == null) onDone() else error = result
-            }) { Text("Guardar") }
+            }) { Text(stringResource(R.string.profile_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.profile_cancel)) } },
     )
+}
+
+/** La Activity detrás de un Context (puede venir envuelto en ContextWrapper). */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

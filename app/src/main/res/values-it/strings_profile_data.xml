@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_error_no_session">Non hai effettuato l\'accesso</string>
+    <string name="profile_error_vehicle_name_required">Inserisci un nome per il veicolo</string>
+    <string name="profile_error_vehicle_active_parking">Questo veicolo ha una sosta attiva. Ritiralo prima di eliminarlo.</string>
+    <string name="profile_error_save_failed">Impossibile salvare: %1$s</string>
+</resources>

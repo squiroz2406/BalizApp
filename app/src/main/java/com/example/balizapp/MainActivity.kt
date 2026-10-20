@@ -1,5 +1,6 @@
 package com.example.balizapp
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.graphics.Color
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import com.example.balizapp.auth.AuthViewModel
 import com.example.balizapp.auth.ui.AuthGate
+import com.example.balizapp.i18n.AppLocale
 import com.example.balizapp.navigation.AppNavHost
 import com.example.balizapp.notifications.Notifications
 import com.example.balizapp.ui.theme.BalizAppTheme
@@ -32,6 +34,10 @@ class MainActivity : FragmentActivity() {
 
     /** Estacionamiento a abrir en "Volver al auto" cuando se toca una notificación de vencimiento. */
     private val openReturnToCar = mutableStateOf<String?>(null)
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

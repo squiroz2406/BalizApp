@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Details</string>
+    <string name="detail_not_found_title">Parking spot not found</string>
+    <string name="detail_not_found_text">It may have been deleted.</string>
+    <string name="detail_vehicle_default">Vehicle</string>
+    <string name="detail_label_address">Address</string>
+    <string name="detail_label_since">Since</string>
+    <string name="detail_label_finished">Picked up</string>
+    <string name="detail_label_level_sector">Floor or section</string>
+    <string name="detail_label_note">Note</string>
+    <string name="detail_label_rule">Sign rule</string>
+    <string name="detail_label_plate">License plate</string>
+    <string name="detail_return_to_car">Back to my car</string>
+    <string name="detail_edit">Edit</string>
+    <string name="detail_finish">I picked it up</string>
+    <string name="detail_delete_history">Delete from history</string>
+    <string name="detail_confirm_finish_title">Did you pick up your vehicle?</string>
+    <string name="detail_confirm_finish_text">The parking spot moves to your history.</string>
+    <string name="detail_confirm_finish_ok">Yes, I did</string>
+    <string name="detail_confirm_delete_title">Delete this record?</string>
+    <string name="detail_confirm_delete_text">It will be removed from your history and this can\'t be undone.</string>
+    <string name="detail_confirm_delete_ok">Delete</string>
+    <string name="detail_cancel">Cancel</string>
+    <string name="detail_time_lasted">Parked for %1$s</string>
+    <string name="detail_time_no_limit">No time limit</string>
+    <string name="detail_time_parked_ago">Parked %1$s ago</string>
+    <string name="detail_time_expires">Expires %1$s</string>
+    <string name="detail_photo_place">Photo of the place</string>
+    <string name="detail_photo_sign">Photo of the sign</string>
+    <string name="detail_error_finish">Couldn\'t mark as picked up</string>
+    <string name="detail_error_delete">Couldn\'t delete</string>
+</resources>

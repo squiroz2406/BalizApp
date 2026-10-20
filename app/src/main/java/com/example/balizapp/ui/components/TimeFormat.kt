@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.components
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -11,13 +13,11 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.abs
 
 private val zone: ZoneId get() = ZoneId.systemDefault()
-private val spanish = Locale.forLanguageTag("es-AR")
-private val timeFormat = DateTimeFormatter.ofPattern("HH:mm", spanish)
-private val dateFormat = DateTimeFormatter.ofPattern("EEE d MMM", spanish)
+private val timeFormat get() = DateTimeFormatter.ofPattern("HH:mm", AppLocale.current().locale)
+private val dateFormat get() = DateTimeFormatter.ofPattern("EEE d MMM", AppLocale.current().locale)
 
 fun Timestamp.toMillis(): Long = toDate().time
 
@@ -28,8 +28,8 @@ fun formatDateTime(millis: Long): String {
     val time = dateTime.format(timeFormat)
     return when (dateTime.toLocalDate()) {
         today -> time
-        today.plusDays(1) -> "mañana $time"
-        today.minusDays(1) -> "ayer $time"
+        today.plusDays(1) -> AppLocale.str(R.string.time_tomorrow, time)
+        today.minusDays(1) -> AppLocale.str(R.string.time_yesterday, time)
         else -> "${dateTime.format(dateFormat)} $time"
     }
 }
@@ -52,9 +52,9 @@ fun formatDuration(millis: Long): String {
 fun formatRemaining(expiresAt: Long, now: Long): String {
     val diff = expiresAt - now
     return when {
-        diff > 60_000 -> "Quedan ${formatDuration(diff)}"
-        diff > 0 -> "Queda menos de 1 min"
-        else -> "Venció hace ${formatDuration(diff)}"
+        diff > 60_000 -> AppLocale.str(R.string.time_remaining, formatDuration(diff))
+        diff > 0 -> AppLocale.str(R.string.time_less_than_minute)
+        else -> AppLocale.str(R.string.time_expired_ago, formatDuration(diff))
     }
 }
 

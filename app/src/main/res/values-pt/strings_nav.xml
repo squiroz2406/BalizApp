@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_title">Voltar ao carro</string>
+    <string name="nav_not_found_title">Estacionamento não encontrado</string>
+    <string name="nav_not_found_text">Pode ter sido apagado ou não ter localização salva.</string>
+    <string name="nav_finish">Já retirei</string>
+    <string name="nav_no_location">Sem localização</string>
+    <string name="nav_searching_position">Procurando sua posição…</string>
+    <string name="nav_arrived">Você chegou!</string>
+    <string name="nav_gps_low_accuracy">GPS com pouca precisão (±%1$d m)</string>
+    <string name="nav_allow_location">Permitir localização</string>
+    <string name="nav_guide_no_permission">Permita a localização para calcular para onde caminhar.</string>
+    <string name="nav_guide_arrived">Você está a menos de %1$d m do veículo.</string>
+    <string name="nav_guide_waiting_gps">Aguardando o GPS…</string>
+    <string name="nav_guide_follow_blue_line">Siga a linha azul no mapa: é o trajeto pelas ruas.</string>
+    <string name="nav_calculating_route">Calculando o trajeto pelas ruas…</string>
+    <string name="nav_guide_follow_line_straight">Siga a linha no mapa até o veículo (em linha reta, sem trajeto pelas ruas).</string>
+    <string name="nav_guide_no_compass">Sem bússola neste celular: caminhe para %1$s (a seta indica o rumo com o norte para cima).</string>
+    <string name="nav_guide_calibrate">Calibre a bússola movendo o celular em forma de 8.</string>
+    <string name="nav_guide_compass">Segure o celular na horizontal e caminhe para onde a seta aponta (%1$s).</string>
+    <string name="nav_mode_direct">Direto</string>
+    <string name="nav_mode_streets">Pelas ruas</string>
+    <string name="nav_route_summary">pelas ruas · cerca de %1$d min a pé</string>
+    <string name="nav_straight_distance">Em linha reta: %1$s</string>
+    <string name="nav_updating_route">Atualizando trajeto…</string>
+    <string name="nav_recalculate">Recalcular</string>
+    <string name="nav_attribution">Trajeto: OSRM (FOSSGIS) com dados de © OpenStreetMap · Corrigir o mapa</string>
+    <string name="nav_vehicle_default">Seu veículo</string>
+    <string name="nav_level_sector">Andar / setor: %1$s</string>
+    <string name="nav_open_maps">Abrir no Maps</string>
+    <string name="nav_cardinal_n">norte</string>
+    <string name="nav_cardinal_ne">nordeste</string>
+    <string name="nav_cardinal_e">leste</string>
+    <string name="nav_cardinal_se">sudeste</string>
+    <string name="nav_cardinal_s">sul</string>
+    <string name="nav_cardinal_sw">sudoeste</string>
+    <string name="nav_cardinal_w">oeste</string>
+    <string name="nav_cardinal_nw">noroeste</string>
+    <string name="nav_route_error_retry">Não foi possível calcular a rota. Tentando de novo em alguns segundos.</string>
+    <string name="nav_route_error_offline">Sem conexão: não é possível calcular a rota pelas ruas. Mostrando a linha reta até o veículo.</string>
+    <string name="nav_route_saved_offline">Sem conexão: usando o último trajeto pelas ruas salvo.</string>
+    <string name="nav_finish_error">Não foi possível marcar como retirado: %1$s</string>
+</resources>

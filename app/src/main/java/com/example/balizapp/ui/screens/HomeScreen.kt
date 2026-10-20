@@ -1,5 +1,9 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,8 +46,11 @@ import com.example.balizapp.ui.components.rememberNow
 import com.example.balizapp.ui.components.toMillis
 
 /** Filtro por estado del estacionamiento en Inicio. */
-private enum class StatusFilter(val label: String) {
-    ALL("Todos"), CURRENT("Actuales"), EXPIRED("Vencidos"), FINISHED("Finalizados")
+private enum class StatusFilter(@StringRes val labelRes: Int) {
+    ALL(R.string.home_filter_status_all),
+    CURRENT(R.string.home_filter_status_current),
+    EXPIRED(R.string.home_filter_status_expired),
+    FINISHED(R.string.home_filter_status_finished),
 }
 
 /** Inicio (RF2): estacionamientos activos arriba, destacados, y el historial debajo. */
@@ -74,7 +81,7 @@ fun HomeScreen(
         matchesVehicle(it) && (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED)
     }
 
-    ScreenScaffold(title = "BalizApp") {
+    ScreenScaffold(title = stringResource(R.string.app_name)) {
         Button(
             onClick = onParkHere,
             modifier = Modifier
@@ -82,7 +89,7 @@ fun HomeScreen(
                 .height(64.dp),
         ) {
             Icon(Icons.Filled.LocationOn, contentDescription = null)
-            Text("  Estacioné aquí", style = MaterialTheme.typography.titleMedium)
+            Text("  " + stringResource(R.string.home_park_here), style = MaterialTheme.typography.titleMedium)
         }
 
         when {
@@ -92,8 +99,8 @@ fun HomeScreen(
 
             state.active.isEmpty() && state.history.isEmpty() -> EmptyState(
                 icon = Icons.Filled.Place,
-                title = "Todavía no guardaste ningún estacionamiento",
-                text = "Cuando dejes el auto, tocá \"Estacioné aquí\".",
+                title = stringResource(R.string.home_empty_title),
+                text = stringResource(R.string.home_empty_text),
             )
 
             else -> {
@@ -103,14 +110,14 @@ fun HomeScreen(
                             FilterChip(
                                 selected = selectedVehicle == null,
                                 onClick = { vehicleFilter = null },
-                                label = { Text("Todos los vehículos") },
+                                label = { Text(stringResource(R.string.home_filter_all_vehicles)) },
                             )
                         }
                         items(state.vehicles.values.toList(), key = { it.id }) { v ->
                             FilterChip(
                                 selected = selectedVehicle == v.id,
                                 onClick = { vehicleFilter = v.id },
-                                label = { Text(v.alias.ifBlank { v.type.label }) },
+                                label = { Text(v.alias.ifBlank { stringResource(v.type.labelRes) }) },
                             )
                         }
                     }
@@ -120,7 +127,7 @@ fun HomeScreen(
                         FilterChip(
                             selected = statusFilter == f,
                             onClick = { statusFilter = f },
-                            label = { Text(f.label) },
+                            label = { Text(stringResource(f.labelRes)) },
                         )
                     }
                 }
@@ -131,14 +138,14 @@ fun HomeScreen(
                     if (active.isEmpty() && history.isEmpty()) {
                         item {
                             Text(
-                                "No hay estacionamientos con estos filtros.",
+                                stringResource(R.string.home_no_results),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                     }
                     if (active.isNotEmpty()) {
-                        item { SectionLabel("Estacionado ahora") }
+                        item { SectionLabel(stringResource(R.string.home_section_active)) }
                         items(active, key = { it.id }) { parking ->
                             ActiveParkingCard(parking, state.vehicles[parking.vehicleId], now) {
                                 onOpenParking(parking.id)
@@ -146,11 +153,11 @@ fun HomeScreen(
                         }
                     }
                     if (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED) {
-                        item { SectionLabel("Historial") }
+                        item { SectionLabel(stringResource(R.string.home_section_history)) }
                         if (history.isEmpty() && state.history.isEmpty()) {
                             item {
                                 Text(
-                                    "Cuando retires el auto, el estacionamiento aparece acá.",
+                                    stringResource(R.string.home_history_empty),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
@@ -195,12 +202,12 @@ private fun ActiveParkingCard(parking: Parking, vehicle: Vehicle?, now: Long, on
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    vehicle?.alias ?: "Vehículo",
+                    vehicle?.alias ?: stringResource(R.string.core_vehicle_default),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 parking.summaryLine()?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                Text("Desde ${formatDateTime(parking.startedAt)}", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.home_since, formatDateTime(parking.startedAt)), style = MaterialTheme.typography.bodySmall)
             }
             parking.expiresAt?.let { expiresAt ->
                 Text(
@@ -217,7 +224,7 @@ private fun ActiveParkingCard(parking: Parking, vehicle: Vehicle?, now: Long, on
 @Composable
 private fun HistoryItem(parking: Parking, vehicle: Vehicle?, onClick: () -> Unit) {
     ListItem(
-        headlineContent = { Text(parking.summaryLine() ?: (vehicle?.alias ?: "Estacionamiento")) },
+        headlineContent = { Text(parking.summaryLine() ?: (vehicle?.alias ?: stringResource(R.string.core_parking_default))) },
         supportingContent = {
             Text(listOfNotNull(vehicle?.alias, formatDateTime(parking.startedAt)).joinToString(" · "))
         },
@@ -228,5 +235,5 @@ private fun HistoryItem(parking: Parking, vehicle: Vehicle?, onClick: () -> Unit
 
 /** Texto corto para identificar el lugar: dirección, nota o piso/sector. */
 fun Parking.summaryLine(): String? =
-    listOfNotNull(addressText, note, levelSector?.let { "Sector $it" })
+    listOfNotNull(addressText, note, levelSector?.let { AppLocale.str(R.string.core_sector, it) })
         .firstOrNull { it.isNotBlank() }

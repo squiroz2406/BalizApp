@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_title">Torna all\'auto</string>
+    <string name="nav_not_found_title">Parcheggio non trovato</string>
+    <string name="nav_not_found_text">Potrebbe essere stato eliminato o non avere una posizione salvata.</string>
+    <string name="nav_finish">L\'ho ritirato</string>
+    <string name="nav_no_location">Nessuna posizione</string>
+    <string name="nav_searching_position">Ricerca della tua posizione…</string>
+    <string name="nav_arrived">Sei arrivato!</string>
+    <string name="nav_gps_low_accuracy">GPS poco preciso (±%1$d m)</string>
+    <string name="nav_allow_location">Consenti posizione</string>
+    <string name="nav_guide_no_permission">Consenti la posizione per calcolare dove camminare.</string>
+    <string name="nav_guide_arrived">Sei a meno di %1$d m dal veicolo.</string>
+    <string name="nav_guide_waiting_gps">In attesa del GPS…</string>
+    <string name="nav_guide_follow_blue_line">Segui la linea blu sulla mappa: è il percorso lungo le strade.</string>
+    <string name="nav_calculating_route">Calcolo del percorso stradale…</string>
+    <string name="nav_guide_follow_line_straight">Segui la linea sulla mappa fino al veicolo (in linea retta, non è un percorso stradale).</string>
+    <string name="nav_guide_no_compass">Nessuna bussola su questo telefono: cammina verso %1$s (la freccia indica la direzione con il nord in alto).</string>
+    <string name="nav_guide_calibrate">Calibra la bussola muovendo il telefono a forma di 8.</string>
+    <string name="nav_guide_compass">Tieni il telefono in orizzontale e cammina dove punta la freccia (%1$s).</string>
+    <string name="nav_mode_direct">Diretto</string>
+    <string name="nav_mode_streets">Per strada</string>
+    <string name="nav_route_summary">per strada · circa %1$d min a piedi</string>
+    <string name="nav_straight_distance">In linea retta: %1$s</string>
+    <string name="nav_updating_route">Aggiornamento del percorso…</string>
+    <string name="nav_recalculate">Ricalcola</string>
+    <string name="nav_attribution">Percorso: OSRM (FOSSGIS) con dati di © OpenStreetMap · Correggi la mappa</string>
+    <string name="nav_vehicle_default">Il tuo veicolo</string>
+    <string name="nav_level_sector">Piano / settore: %1$s</string>
+    <string name="nav_open_maps">Apri in Maps</string>
+    <string name="nav_cardinal_n">nord</string>
+    <string name="nav_cardinal_ne">nord-est</string>
+    <string name="nav_cardinal_e">est</string>
+    <string name="nav_cardinal_se">sud-est</string>
+    <string name="nav_cardinal_s">sud</string>
+    <string name="nav_cardinal_sw">sud-ovest</string>
+    <string name="nav_cardinal_w">ovest</string>
+    <string name="nav_cardinal_nw">nord-ovest</string>
+    <string name="nav_route_error_retry">Impossibile calcolare il percorso. Nuovo tentativo tra qualche secondo.</string>
+    <string name="nav_route_error_offline">Nessuna connessione: impossibile calcolare il percorso stradale. Viene mostrata la linea retta fino al veicolo.</string>
+    <string name="nav_route_saved_offline">Nessuna connessione: uso l\'ultimo percorso stradale salvato.</string>
+    <string name="nav_finish_error">Impossibile segnare come ritirato: %1$s</string>
+</resources>

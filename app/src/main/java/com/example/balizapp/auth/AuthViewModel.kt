@@ -1,5 +1,7 @@
 package com.example.balizapp.auth
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.app.Application
 import android.util.Patterns
 import android.util.Log
@@ -71,15 +73,15 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
     fun signIn(email: String, password: String) {
         validateEmail(email)?.let { return fail(it) }
-        if (password.isEmpty()) return fail("Ingresá tu contraseña")
+        if (password.isEmpty()) return fail(AppLocale.str(R.string.auth_error_password_required))
         run { repo.signIn(email.trim(), password) }
     }
 
     fun register(name: String, email: String, password: String, confirm: String) {
-        if (name.isBlank()) return fail("Ingresá tu nombre")
+        if (name.isBlank()) return fail(AppLocale.str(R.string.auth_error_name_required))
         validateEmail(email)?.let { return fail(it) }
-        if (password.length < 6) return fail("La contraseña debe tener al menos 6 caracteres")
-        if (password != confirm) return fail("Las contraseñas no coinciden")
+        if (password.length < 6) return fail(AppLocale.str(R.string.auth_error_password_short))
+        if (password != confirm) return fail(AppLocale.str(R.string.auth_error_password_mismatch))
         run { repo.register(name.trim(), email.trim(), password) }
     }
 
@@ -88,26 +90,26 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         run {
             when (val result = BiometricGate.authenticate(
                 activity,
-                title = "Verificá tu identidad",
-                subtitle = "Usá tu huella para continuar con Google",
+                title = AppLocale.str(R.string.auth_biometric_title),
+                subtitle = AppLocale.str(R.string.auth_biometric_subtitle),
             )) {
                 BiometricResult.Success -> repo.signInWithGoogle(activity)
                 BiometricResult.Cancelled -> throw BiometricCancelledException()
                 is BiometricResult.Unavailable -> error(result.message)
-                is BiometricResult.Failed -> error("No se pudo verificar tu identidad: ${result.message}")
+                is BiometricResult.Failed -> error(AppLocale.str(R.string.auth_error_identity_failed, result.message))
             }
         }
     }
 
     fun sendPasswordReset(email: String) {
         validateEmail(email)?.let { return fail(it) }
-        run(success = "Te enviamos un correo para restablecer tu contraseña") {
+        run(success = AppLocale.str(R.string.auth_msg_reset_sent)) {
             repo.sendPasswordReset(email.trim())
         }
     }
 
     fun resendVerification() =
-        run(success = "Correo de verificación enviado") { repo.resendVerification() }
+        run(success = AppLocale.str(R.string.auth_msg_verification_sent)) { repo.resendVerification() }
 
     fun checkVerified() = run {
         if (!repo.reloadIsVerified()) error("verification-pending")
@@ -143,8 +145,8 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private fun fail(msg: String) = _state.update { it.copy(error = msg, message = null) }
 
     private fun validateEmail(email: String): String? = when {
-        email.isBlank() -> "Ingresá tu correo electrónico"
-        !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> "El correo no es válido"
+        email.isBlank() -> AppLocale.str(R.string.auth_error_email_required)
+        !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> AppLocale.str(R.string.auth_error_email_invalid)
         else -> null
     }
 
@@ -153,17 +155,16 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun messageFor(e: Exception): String = when {
-        e.message == "verification-pending" -> "Todavía no verificaste tu correo"
-        e is FirebaseAuthWeakPasswordException -> "La contraseña es demasiado débil"
-        e is FirebaseAuthUserCollisionException -> "Ya existe una cuenta con ese correo"
-        e is FirebaseAuthInvalidUserException -> "No existe una cuenta con ese correo"
-        e is FirebaseAuthInvalidCredentialsException -> "Correo o contraseña incorrectos"
-        e is FirebaseNetworkException -> "Sin conexión. Revisá tu internet"
+        e.message == "verification-pending" -> AppLocale.str(R.string.auth_error_verification_pending)
+        e is FirebaseAuthWeakPasswordException -> AppLocale.str(R.string.auth_error_weak_password)
+        e is FirebaseAuthUserCollisionException -> AppLocale.str(R.string.auth_error_account_exists)
+        e is FirebaseAuthInvalidUserException -> AppLocale.str(R.string.auth_error_no_account)
+        e is FirebaseAuthInvalidCredentialsException -> AppLocale.str(R.string.auth_error_wrong_credentials)
+        e is FirebaseNetworkException -> AppLocale.str(R.string.auth_error_network)
         e is NoCredentialException ->
-            "No hay una cuenta de Google disponible. Agregá una en Ajustes del teléfono; " +
-                "si ya hay una, falta registrar la huella SHA-1 de la app en Firebase"
-        e is GetCredentialException -> "No se pudo iniciar sesión con Google: ${e.errorMessage ?: e.type}"
-        e is FirebaseAuthException -> "Error de autenticación (${e.errorCode})"
-        else -> e.message ?: "Ocurrió un error inesperado"
+            AppLocale.str(R.string.auth_error_no_google_account)
+        e is GetCredentialException -> AppLocale.str(R.string.auth_error_google_failed, e.errorMessage ?: e.type)
+        e is FirebaseAuthException -> AppLocale.str(R.string.auth_error_auth_code, e.errorCode)
+        else -> e.message ?: AppLocale.str(R.string.auth_error_unexpected)
     }
 }

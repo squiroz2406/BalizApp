@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Details</string>
+    <string name="detail_not_found_title">Parkplatz nicht gefunden</string>
+    <string name="detail_not_found_text">Er wurde möglicherweise gelöscht.</string>
+    <string name="detail_vehicle_default">Fahrzeug</string>
+    <string name="detail_label_address">Adresse</string>
+    <string name="detail_label_since">Seit</string>
+    <string name="detail_label_finished">Abgeholt</string>
+    <string name="detail_label_level_sector">Etage oder Bereich</string>
+    <string name="detail_label_note">Notiz</string>
+    <string name="detail_label_rule">Regel auf dem Schild</string>
+    <string name="detail_label_plate">Kennzeichen</string>
+    <string name="detail_return_to_car">Zurück zum Auto</string>
+    <string name="detail_edit">Bearbeiten</string>
+    <string name="detail_finish">Abgeholt</string>
+    <string name="detail_delete_history">Aus dem Verlauf löschen</string>
+    <string name="detail_confirm_finish_title">Hast du das Fahrzeug abgeholt?</string>
+    <string name="detail_confirm_finish_text">Der Parkplatz wird in den Verlauf verschoben.</string>
+    <string name="detail_confirm_finish_ok">Ja, abgeholt</string>
+    <string name="detail_confirm_delete_title">Diesen Eintrag löschen?</string>
+    <string name="detail_confirm_delete_text">Er wird aus dem Verlauf entfernt und das kann nicht rückgängig gemacht werden.</string>
+    <string name="detail_confirm_delete_ok">Löschen</string>
+    <string name="detail_cancel">Abbrechen</string>
+    <string name="detail_time_lasted">Geparkt: %1$s</string>
+    <string name="detail_time_no_limit">Kein Zeitlimit</string>
+    <string name="detail_time_parked_ago">Vor %1$s geparkt</string>
+    <string name="detail_time_expires">Läuft ab: %1$s</string>
+    <string name="detail_photo_place">Foto vom Ort</string>
+    <string name="detail_photo_sign">Foto vom Schild</string>
+    <string name="detail_error_finish">Konnte nicht als abgeholt markiert werden</string>
+    <string name="detail_error_delete">Konnte nicht gelöscht werden</string>
+</resources>

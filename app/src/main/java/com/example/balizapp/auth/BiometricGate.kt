@@ -1,5 +1,6 @@
 package com.example.balizapp.auth
 
+import com.example.balizapp.R
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
@@ -38,10 +39,10 @@ object BiometricGate {
         when (BiometricManager.from(activity).canAuthenticate(authenticators)) {
             BiometricManager.BIOMETRIC_SUCCESS -> Unit
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> return BiometricResult.Unavailable(
-                "Registrá una huella o un bloqueo de pantalla en los Ajustes del teléfono para ingresar con Google"
+                activity.getString(R.string.auth_biometric_none_enrolled)
             )
             else -> return BiometricResult.Unavailable(
-                "Este teléfono no permite verificar tu identidad con huella o bloqueo de pantalla"
+                activity.getString(R.string.auth_biometric_unavailable)
             )
         }
 

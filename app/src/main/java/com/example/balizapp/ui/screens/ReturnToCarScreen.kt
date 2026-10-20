@@ -1,5 +1,8 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
+import com.example.balizapp.i18n.AppLocale
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -58,7 +61,6 @@ import com.example.balizapp.ui.components.MapPoint
 import com.example.balizapp.ui.components.OsmMap
 import com.example.balizapp.ui.components.ScreenScaffold
 import com.example.balizapp.ui.components.rememberLocationPermissionRequest
-import java.util.Locale
 import kotlin.math.roundToInt
 
 private val CarColor = Color(0xFFE65100)
@@ -85,15 +87,15 @@ fun ReturnToCarScreen(vm: ReturnToCarViewModel, onBack: () -> Unit, onFinished: 
         onDispose { view.keepScreenOn = false }
     }
 
-    ScreenScaffold(title = "Volver al auto", onBack = onBack) {
+    ScreenScaffold(title = stringResource(R.string.nav_title), onBack = onBack) {
         val parking = state.parking
         val car = parking?.location?.let { MapPoint(it.latitude, it.longitude) }
         when {
             state.loading -> CircularProgressIndicator(Modifier.padding(24.dp))
             parking == null || car == null -> EmptyState(
                 icon = Icons.Filled.Info,
-                title = "No se encontró el estacionamiento",
-                text = "Puede que se haya borrado o que no tenga ubicación guardada.",
+                title = stringResource(R.string.nav_not_found_title),
+                text = stringResource(R.string.nav_not_found_text),
             )
             else -> {
                 ModeSelector(state.mode, onSelect = vm::setMode)
@@ -108,7 +110,7 @@ fun ReturnToCarScreen(vm: ReturnToCarViewModel, onBack: () -> Unit, onFinished: 
                         onClick = vm::finish,
                         enabled = !state.working,
                         modifier = Modifier.weight(1f),
-                    ) { Text("Ya lo retiré") }
+                    ) { Text(stringResource(R.string.nav_finish)) }
                 }
             }
         }
@@ -138,9 +140,9 @@ private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Uni
                 val distance = state.shownDistanceMeters
                 Text(
                     when {
-                        !state.hasLocationPermission -> "Sin ubicación"
-                        distance == null -> "Buscando tu posición…"
-                        arrived -> "¡Llegaste!"
+                        !state.hasLocationPermission -> stringResource(R.string.nav_no_location)
+                        distance == null -> stringResource(R.string.nav_searching_position)
+                        arrived -> stringResource(R.string.nav_arrived)
                         else -> formatDistance(distance)
                     },
                     style = MaterialTheme.typography.headlineMedium,
@@ -150,33 +152,34 @@ private fun GuidanceCard(state: ReturnToCarState, onRequestPermission: () -> Uni
                 Text(guidanceText(state), style = MaterialTheme.typography.bodyMedium)
                 state.myPosition?.accuracyMeters?.takeIf { it > 30f }?.let {
                     Text(
-                        "GPS con poca precisión (±${it.roundToInt()} m)",
+                        stringResource(R.string.nav_gps_low_accuracy, it.roundToInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
                 if (!state.hasLocationPermission) {
-                    OutlinedButton(onClick = onRequestPermission) { Text("Permitir ubicación") }
+                    OutlinedButton(onClick = onRequestPermission) { Text(stringResource(R.string.nav_allow_location)) }
                 }
             }
         }
     }
 }
 
+@Composable
 private fun guidanceText(state: ReturnToCarState): String {
     val bearing = state.bearingDegrees
     return when {
-        !state.hasLocationPermission -> "Permití la ubicación para calcular hacia dónde caminar."
-        state.arrived -> "Estás a menos de ${ReturnToCarState.ARRIVED_METERS.roundToInt()} m del vehículo."
-        bearing == null -> "Esperando el GPS…"
+        !state.hasLocationPermission -> stringResource(R.string.nav_guide_no_permission)
+        state.arrived -> stringResource(R.string.nav_guide_arrived, ReturnToCarState.ARRIVED_METERS.roundToInt())
+        bearing == null -> stringResource(R.string.nav_guide_waiting_gps)
         state.mode == GuidanceMode.STREETS && state.routeUi.route != null ->
-            "Seguí la línea azul del mapa: es el recorrido por calles."
-        state.mode == GuidanceMode.STREETS && state.routeUi.loading -> "Calculando el recorrido por calles…"
-        state.mode == GuidanceMode.STREETS -> "Seguí la línea del mapa hasta el vehículo (en línea recta, sin recorrido por calles)."
+            stringResource(R.string.nav_guide_follow_blue_line)
+        state.mode == GuidanceMode.STREETS && state.routeUi.loading -> stringResource(R.string.nav_calculating_route)
+        state.mode == GuidanceMode.STREETS -> stringResource(R.string.nav_guide_follow_line_straight)
         !state.compassAvailable ->
-            "Sin brújula en este teléfono: caminá hacia el ${cardinal(bearing)} (la flecha indica el rumbo con el norte arriba)."
-        state.compassUnreliable -> "Calibrá la brújula moviendo el teléfono en forma de 8."
-        else -> "Sostené el teléfono horizontal y caminá hacia donde apunta la flecha (${cardinal(bearing)})."
+            stringResource(R.string.nav_guide_no_compass, cardinal(bearing))
+        state.compassUnreliable -> stringResource(R.string.nav_guide_calibrate)
+        else -> stringResource(R.string.nav_guide_compass, cardinal(bearing))
     }
 }
 
@@ -229,7 +232,10 @@ private fun CompassArrow(rotation: Float?, color: Color) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModeSelector(mode: GuidanceMode, onSelect: (GuidanceMode) -> Unit) {
-    val options = listOf(GuidanceMode.DIRECT to "Directo", GuidanceMode.STREETS to "Por calles")
+    val options = listOf(
+        GuidanceMode.DIRECT to stringResource(R.string.nav_mode_direct),
+        GuidanceMode.STREETS to stringResource(R.string.nav_mode_streets),
+    )
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, (option, label) ->
             SegmentedButton(
@@ -251,22 +257,22 @@ private fun RouteSummary(state: ReturnToCarState, onRecalculate: () -> Unit) {
             when {
                 route != null -> {
                     val minutes = (route.durationSeconds / 60).roundToInt().coerceAtLeast(1)
-                    Text("por calles · unos $minutes min a pie", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.nav_route_summary, minutes), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                     state.directDistanceMeters?.let {
-                        Text("En línea recta: ${formatDistance(it)}", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.nav_straight_distance, formatDistance(it)), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                routeUi.loading -> Text("Calculando el recorrido por calles…", style = MaterialTheme.typography.bodySmall)
+                routeUi.loading -> Text(stringResource(R.string.nav_calculating_route), style = MaterialTheme.typography.bodySmall)
             }
             if (routeUi.loading && route != null) {
-                Text("Actualizando recorrido…", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.nav_updating_route), style = MaterialTheme.typography.bodySmall)
             }
             routeUi.error?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
         }
         if (!routeUi.loading && state.myPosition != null) {
-            TextButton(onClick = onRecalculate) { Text("Recalcular") }
+            TextButton(onClick = onRecalculate) { Text(stringResource(R.string.nav_recalculate)) }
         }
     }
 }
@@ -276,7 +282,7 @@ private fun RouteSummary(state: ReturnToCarState, onRecalculate: () -> Unit) {
 private fun RouteAttribution() {
     val context = LocalContext.current
     Text(
-        "Recorrido: OSRM (FOSSGIS) con datos de © OpenStreetMap · Corregir el mapa",
+        stringResource(R.string.nav_attribution),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.clickable {
@@ -334,13 +340,14 @@ private fun ReturnMap(state: ReturnToCarState, car: MapPoint, modifier: Modifier
 @Composable
 private fun PlaceInfo(state: ReturnToCarState) {
     val parking = state.parking ?: return
+    val defaultVehicle = stringResource(R.string.nav_vehicle_default)
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            listOfNotNull(state.vehicle?.alias, state.vehicle?.plate).joinToString(" · ").ifEmpty { "Tu vehículo" },
+            listOfNotNull(state.vehicle?.alias, state.vehicle?.plate).joinToString(" · ").ifEmpty { defaultVehicle },
             style = MaterialTheme.typography.titleMedium,
         )
         parking.levelSector?.let {
-            Text("Piso / sector: $it", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.nav_level_sector, it), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
         }
         listOfNotNull(parking.addressText, parking.note).takeIf { it.isNotEmpty() }?.let {
             Text(
@@ -372,14 +379,20 @@ private fun WalkingRouteButton(car: MapPoint, modifier: Modifier) {
             }
         },
         modifier = modifier,
-    ) { Text("Abrir en Maps") }
+    ) { Text(stringResource(R.string.nav_open_maps)) }
 }
 
 private fun formatDistance(meters: Float): String =
     if (meters < 1000) "${meters.roundToInt()} m"
-    else String.format(Locale.forLanguageTag("es-AR"), "%.1f km", meters / 1000)
+    else String.format(AppLocale.current().locale, "%.1f km", meters / 1000)
 
+@Composable
 private fun cardinal(bearing: Float): String {
-    val names = listOf("norte", "noreste", "este", "sudeste", "sur", "sudoeste", "oeste", "noroeste")
+    val names = listOf(
+        stringResource(R.string.nav_cardinal_n), stringResource(R.string.nav_cardinal_ne),
+        stringResource(R.string.nav_cardinal_e), stringResource(R.string.nav_cardinal_se),
+        stringResource(R.string.nav_cardinal_s), stringResource(R.string.nav_cardinal_sw),
+        stringResource(R.string.nav_cardinal_w), stringResource(R.string.nav_cardinal_nw),
+    )
     return names[(((bearing + 22.5f) % 360f) / 45f).toInt().coerceIn(0, 7)]
 }

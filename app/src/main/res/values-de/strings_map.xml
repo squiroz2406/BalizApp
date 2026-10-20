@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="map_title">Karte</string>
+    <string name="map_center_on_me">Auf meinen Standort zentrieren</string>
+    <string name="map_allow_location_prompt">Erlaube den Standortzugriff, um zu sehen, wo du bist.</string>
+    <string name="map_allow_location">Standort erlauben</string>
+    <string name="map_parking_default">Parkplatz</string>
+    <string name="map_parked_now">Jetzt geparkt</string>
+    <string name="map_close">Schließen</string>
+    <string name="map_view_detail">Details ansehen</string>
+    <string name="map_banner_offline">Keine Verbindung. Deine Änderungen werden auf dem Handy gespeichert und synchronisiert, sobald das Netz wieder da ist.</string>
+    <string name="map_banner_syncing">Änderungen werden synchronisiert…</string>
+</resources>

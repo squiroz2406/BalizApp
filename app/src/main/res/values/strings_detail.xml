@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Detalle</string>
+    <string name="detail_not_found_title">No se encontró el estacionamiento</string>
+    <string name="detail_not_found_text">Puede que se haya borrado.</string>
+    <string name="detail_vehicle_default">Vehículo</string>
+    <string name="detail_label_address">Dirección</string>
+    <string name="detail_label_since">Desde</string>
+    <string name="detail_label_finished">Retirado</string>
+    <string name="detail_label_level_sector">Piso o sector</string>
+    <string name="detail_label_note">Nota</string>
+    <string name="detail_label_rule">Regla del cartel</string>
+    <string name="detail_label_plate">Patente</string>
+    <string name="detail_return_to_car">Volver al auto</string>
+    <string name="detail_edit">Editar</string>
+    <string name="detail_finish">Ya lo retiré</string>
+    <string name="detail_delete_history">Borrar del historial</string>
+    <string name="detail_confirm_finish_title">¿Ya retiraste el vehículo?</string>
+    <string name="detail_confirm_finish_text">El estacionamiento pasa al historial.</string>
+    <string name="detail_confirm_finish_ok">Sí, lo retiré</string>
+    <string name="detail_confirm_delete_title">¿Borrar este registro?</string>
+    <string name="detail_confirm_delete_text">Se elimina del historial y no se puede deshacer.</string>
+    <string name="detail_confirm_delete_ok">Borrar</string>
+    <string name="detail_cancel">Cancelar</string>
+    <string name="detail_time_lasted">Estuvo %1$s</string>
+    <string name="detail_time_no_limit">Sin límite de tiempo</string>
+    <string name="detail_time_parked_ago">Estacionado hace %1$s</string>
+    <string name="detail_time_expires">Vence %1$s</string>
+    <string name="detail_photo_place">Foto del lugar</string>
+    <string name="detail_photo_sign">Foto del cartel</string>
+    <string name="detail_error_finish">No se pudo marcar como retirado</string>
+    <string name="detail_error_delete">No se pudo borrar</string>
+</resources>

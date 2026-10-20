@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.R
+import com.example.balizapp.i18n.AppLocale
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -166,8 +168,8 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
                 // Falló hace poco: no insistir hasta que pase el intervalo.
                 val saved = savedRouteFor(input.car, me)
                 emit(
-                    if (saved != null) RouteUi(route = saved, error = SAVED_ROUTE_MESSAGE)
-                    else RouteUi(error = "No se pudo calcular la ruta. Se reintenta en unos segundos.")
+                    if (saved != null) RouteUi(route = saved, error = AppLocale.str(R.string.nav_route_saved_offline))
+                    else RouteUi(error = AppLocale.str(R.string.nav_route_error_retry))
                 )
                 return@transform
             }
@@ -184,8 +186,8 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
                 Log.w(TAG, "No se pudo calcular la ruta", e)
                 val saved = current ?: savedRouteFor(input.car, me)
                 emit(
-                    if (saved != null) RouteUi(route = saved, error = SAVED_ROUTE_MESSAGE)
-                    else RouteUi(error = "Sin conexión: no se puede calcular la ruta por calles. Se muestra la línea recta hasta el vehículo.")
+                    if (saved != null) RouteUi(route = saved, error = AppLocale.str(R.string.nav_route_saved_offline))
+                    else RouteUi(error = AppLocale.str(R.string.nav_route_error_offline))
                 )
             }
         }
@@ -268,7 +270,7 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
                 ui.update { it.copy(working = false, finished = true) }
             } catch (e: Exception) {
                 Log.w(TAG, "No se pudo marcar como retirado", e)
-                ui.update { it.copy(working = false, error = "No se pudo marcar como retirado: ${e.message}") }
+                ui.update { it.copy(working = false, error = AppLocale.str(R.string.nav_finish_error, e.message.orEmpty())) }
             }
         }
     }
@@ -279,6 +281,5 @@ class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle)
         const val OFF_ROUTE_METERS = 40f
         /** Más lejos que esto del trazado guardado, el recorrido ya no sirve de guía. */
         const val SAVED_ROUTE_MAX_DISTANCE_METERS = 150f
-        const val SAVED_ROUTE_MESSAGE = "Sin conexión: usando el último recorrido por calles guardado."
     }
 }

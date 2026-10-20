@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.theme
 
+import com.example.balizapp.R
+import androidx.annotation.StringRes
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -8,10 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Apariencia elegida por el usuario: la del sistema (por defecto), siempre claro o siempre oscuro. */
-enum class ThemeMode(val label: String) {
-    SYSTEM("Sistema"),
-    LIGHT("Claro"),
-    DARK("Oscuro"),
+enum class ThemeMode(@StringRes val labelRes: Int) {
+    SYSTEM(R.string.core_theme_system),
+    LIGHT(R.string.core_theme_light),
+    DARK(R.string.core_theme_dark),
 }
 
 /** Guarda la elección en SharedPreferences para recordarla entre ejecuciones. */

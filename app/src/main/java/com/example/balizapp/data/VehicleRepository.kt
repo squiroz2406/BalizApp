@@ -1,5 +1,7 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.util.Log
 import com.example.balizapp.data.model.Vehicle
 import com.google.firebase.auth.FirebaseAuth
@@ -20,7 +22,7 @@ class VehicleRepository(
 ) {
     private fun vehicles(uid: String) = db.collection("users").document(uid).collection("vehicles")
 
-    private fun requireUid(): String = auth.currentUser?.uid ?: error("No hay sesión iniciada")
+    private fun requireUid(): String = auth.currentUser?.uid ?: error(AppLocale.str(R.string.profile_error_no_session))
 
     /** Vehículos del usuario con sesión, ordenados por alias, en tiempo real. */
     @OptIn(ExperimentalCoroutinesApi::class)

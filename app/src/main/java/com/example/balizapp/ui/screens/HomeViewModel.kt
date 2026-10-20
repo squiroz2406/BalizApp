@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,7 +64,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                             parkingId = p.id,
                             expiresAt = expires.toMillis(),
                             reminderMinutes = minutes,
-                            vehicleName = names[p.vehicleId] ?: "Tu vehículo",
+                            vehicleName = names[p.vehicleId] ?: AppLocale.str(R.string.core_your_vehicle),
                             place = p.summaryLine(),
                         )
                     }

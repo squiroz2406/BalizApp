@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_error_no_session">Du bist nicht angemeldet</string>
+    <string name="profile_error_vehicle_name_required">Gib dem Fahrzeug einen Namen</string>
+    <string name="profile_error_vehicle_active_parking">Dieses Fahrzeug hat einen aktiven Parkplatz. Beende ihn, bevor du es löschst.</string>
+    <string name="profile_error_save_failed">Speichern fehlgeschlagen: %1$s</string>
+</resources>

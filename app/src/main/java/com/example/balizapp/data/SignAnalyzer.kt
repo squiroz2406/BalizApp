@@ -1,5 +1,7 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.graphics.BitmapFactory
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
@@ -62,14 +64,15 @@ class SignAnalyzer {
 
     /** Lee el cartel de [jpeg]. Devuelve null si la foto no tiene un cartel legible. */
     suspend fun analyzeSign(jpeg: ByteArray, now: LocalDateTime = LocalDateTime.now()): SignAnalysis? {
-        val bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: error("No se pudo leer la foto")
+        val bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: error(AppLocale.str(R.string.form_err_photo_read))
         val day = now.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-AR"))
+        val language = AppLocale.current().nativeName
         val prompt = """
             Sos un asistente que lee carteles de estacionamiento de calles de Argentina.
             Ahora es $day ${now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))} (hora local).
             Mirá la foto del cartel y respondé en JSON:
             - readable: false si en la foto no hay un cartel de estacionamiento que se pueda leer.
-            - ruleSummary: la regla en una frase corta en español (por ejemplo "Medido, máx. 2 h, lun a vie de 8 a 18").
+            - ruleSummary: la regla en una frase corta (por ejemplo "Medido, máx. 2 h, lun a vie de 8 a 18").
             - verdict: "allowed" si ahora se puede estacionar, "forbidden" si ahora está prohibido o
               hay riesgo de grúa o multa, "unknown" si no alcanza la información.
             - maxMinutes: minutos que se puede quedar a partir de ahora (solo si el cartel fija un máximo), si no null.
@@ -77,9 +80,10 @@ class SignAnalyzer {
             - explanation: una frase corta de por qué sí o por qué no.
             - confidence: qué tan seguro estás de haber leído bien.
             No inventes: si no estás seguro de algo, usá null o "unknown" y confidence "low".
+            Escribí ruleSummary y explanation en $language.
         """.trimIndent()
         val response = signModel.generateContent(content { image(bitmap); text(prompt) })
-        val json = JSONObject(response.text ?: error("Sin respuesta de la IA"))
+        val json = JSONObject(response.text ?: error(AppLocale.str(R.string.form_err_ai_no_response)))
         if (!json.optBoolean("readable", false)) return null
         return SignAnalysis(
             ruleSummary = json.optStringOrNull("ruleSummary"),
@@ -97,10 +101,11 @@ class SignAnalyzer {
 
     /** Descripción corta del lugar para recordarlo ("Frente a la farmacia, junto a un árbol"). */
     suspend fun describePlace(jpeg: ByteArray, address: String?): String? {
-        val bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: error("No se pudo leer la foto")
+        val bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: error(AppLocale.str(R.string.form_err_photo_read))
+        val language = AppLocale.current().nativeName
         val prompt = """
             Esta foto muestra dónde alguien dejó su vehículo${address?.let { " (dirección: $it)" }.orEmpty()}.
-            Escribí en español rioplatense UNA frase corta (máximo 15 palabras) que ayude a reconocer el lugar al volver:
+            Escribí en $language UNA frase corta (máximo 15 palabras) que ayude a reconocer el lugar al volver:
             referencias fijas como comercios, carteles, árboles, esquinas o columnas. No describas el vehículo ni
             inventes lo que no se ve. Respondé solo la frase, sin comillas.
         """.trimIndent()

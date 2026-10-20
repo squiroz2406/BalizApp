@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Dettagli</string>
+    <string name="detail_not_found_title">Parcheggio non trovato</string>
+    <string name="detail_not_found_text">Potrebbe essere stato eliminato.</string>
+    <string name="detail_vehicle_default">Veicolo</string>
+    <string name="detail_label_address">Indirizzo</string>
+    <string name="detail_label_since">Dalle</string>
+    <string name="detail_label_finished">Ritirato</string>
+    <string name="detail_label_level_sector">Piano o settore</string>
+    <string name="detail_label_note">Nota</string>
+    <string name="detail_label_rule">Regola del cartello</string>
+    <string name="detail_label_plate">Targa</string>
+    <string name="detail_return_to_car">Torna all\'auto</string>
+    <string name="detail_edit">Modifica</string>
+    <string name="detail_finish">L\'ho ritirato</string>
+    <string name="detail_delete_history">Elimina dalla cronologia</string>
+    <string name="detail_confirm_finish_title">Hai ritirato il veicolo?</string>
+    <string name="detail_confirm_finish_text">Il parcheggio passa nella cronologia.</string>
+    <string name="detail_confirm_finish_ok">Sì, l\'ho ritirato</string>
+    <string name="detail_confirm_delete_title">Eliminare questo record?</string>
+    <string name="detail_confirm_delete_text">Verrà rimosso dalla cronologia e non potrà essere annullato.</string>
+    <string name="detail_confirm_delete_ok">Elimina</string>
+    <string name="detail_cancel">Annulla</string>
+    <string name="detail_time_lasted">Rimasto per %1$s</string>
+    <string name="detail_time_no_limit">Nessun limite di tempo</string>
+    <string name="detail_time_parked_ago">Parcheggiato da %1$s</string>
+    <string name="detail_time_expires">Scade %1$s</string>
+    <string name="detail_photo_place">Foto del luogo</string>
+    <string name="detail_photo_sign">Foto del cartello</string>
+    <string name="detail_error_finish">Impossibile segnare come ritirato</string>
+    <string name="detail_error_delete">Impossibile eliminare</string>
+</resources>

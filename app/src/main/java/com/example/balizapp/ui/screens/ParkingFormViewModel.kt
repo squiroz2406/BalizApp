@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.app.Application
 import android.net.Uri
 import android.util.Log
@@ -135,7 +137,7 @@ class ParkingFormViewModel(
     private fun loadExisting(id: String) {
         viewModelScope.launch {
             try {
-                val parking = parkingRepo.getParking(id) ?: error("El estacionamiento ya no existe")
+                val parking = parkingRepo.getParking(id) ?: error(AppLocale.str(R.string.form_err_not_exists))
                 original = parking
                 _state.update {
                     it.copy(
@@ -155,7 +157,7 @@ class ParkingFormViewModel(
                 if (parking.signPhotoPath != null) loadPhoto(id, PhotoKind.SIGN)
             } catch (e: Exception) {
                 Log.w(TAG, "No se pudo cargar $id", e)
-                _state.update { it.copy(loading = false, error = e.message ?: "No se pudo cargar") }
+                _state.update { it.copy(loading = false, error = e.message ?: AppLocale.str(R.string.form_err_load_failed)) }
             }
         }
     }
@@ -174,7 +176,7 @@ class ParkingFormViewModel(
             val position = locationRepo.currentPosition()
             if (position == null) {
                 _state.update {
-                    it.copy(locating = false, error = "No se pudo obtener la ubicación. Tocá el mapa para marcarla.")
+                    it.copy(locating = false, error = AppLocale.str(R.string.form_err_location))
                 }
                 return@launch
             }
@@ -219,11 +221,11 @@ class ParkingFormViewModel(
             _state.update { it.copy(processingPhoto = kind, error = null) }
             try {
                 val jpeg = ImageCompressor.compress(getApplication<Application>(), uri)
-                val bitmap = jpeg.toImageBitmap() ?: error("No se pudo mostrar la foto")
+                val bitmap = jpeg.toImageBitmap() ?: error(AppLocale.str(R.string.form_err_photo_display))
                 _state.update { it.withPhoto(kind, FormPhoto(jpeg, bitmap), changed = true).copy(processingPhoto = null) }
             } catch (e: Exception) {
                 Log.w(TAG, "Error procesando la foto", e)
-                _state.update { it.copy(processingPhoto = null, error = "No se pudo usar la foto: ${e.message}") }
+                _state.update { it.copy(processingPhoto = null, error = AppLocale.str(R.string.form_err_photo_use, e.message.orEmpty())) }
             }
         }
     }
@@ -258,14 +260,14 @@ class ParkingFormViewModel(
 
     /** Lee el cartel con IA: completa la regla y el vencimiento (el usuario puede corregirlos antes de guardar). */
     fun analyzeSign() {
-        val photo = _state.value.signPhoto ?: return fail("Primero sacá o elegí la foto del cartel")
+        val photo = _state.value.signPhoto ?: return fail(AppLocale.str(R.string.form_err_sign_photo_first))
         if (_state.value.analyzingSign) return
         _state.update { it.copy(analyzingSign = true, error = null) }
         viewModelScope.launch {
             try {
                 val analysis = analyzer.analyzeSign(photo.jpeg)
                 if (analysis == null) {
-                    _state.update { it.copy(analyzingSign = false, error = "No pude leer un cartel en esa foto. Probá con otra más cerca y derecha.") }
+                    _state.update { it.copy(analyzingSign = false, error = AppLocale.str(R.string.form_err_sign_unreadable)) }
                     return@launch
                 }
                 _state.update { s ->
@@ -282,7 +284,7 @@ class ParkingFormViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Error leyendo el cartel", e)
-                _state.update { it.copy(analyzingSign = false, error = aiErrorMessage(e, "No se pudo leer el cartel con IA")) }
+                _state.update { it.copy(analyzingSign = false, error = aiErrorMessage(e, AppLocale.str(R.string.form_err_sign_ai))) }
             }
         }
     }
@@ -290,21 +292,21 @@ class ParkingFormViewModel(
     /** Escribe en la nota una descripción del lugar sacada de la foto. */
     fun describePlace() {
         val s = _state.value
-        val photo = s.placePhoto ?: return fail("Primero sacá o elegí la foto del lugar")
+        val photo = s.placePhoto ?: return fail(AppLocale.str(R.string.form_err_place_photo_first))
         if (s.describingPlace) return
         _state.update { it.copy(describingPlace = true, error = null) }
         viewModelScope.launch {
             try {
                 val text = analyzer.describePlace(photo.jpeg, s.addressText)
                 _state.update {
-                    if (text == null) it.copy(describingPlace = false, error = "La IA no pudo describir el lugar.")
+                    if (text == null) it.copy(describingPlace = false, error = AppLocale.str(R.string.form_err_place_ai_empty))
                     else it.copy(describingPlace = false, note = text)
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Error describiendo el lugar", e)
-                _state.update { it.copy(describingPlace = false, error = aiErrorMessage(e, "No se pudo describir el lugar con IA")) }
+                _state.update { it.copy(describingPlace = false, error = aiErrorMessage(e, AppLocale.str(R.string.form_err_place_ai))) }
             }
         }
     }
@@ -313,9 +315,9 @@ class ParkingFormViewModel(
     private fun aiErrorMessage(e: Exception, fallback: String): String {
         val msg = e.message.orEmpty()
         return if (msg.contains("quota", ignoreCase = true) || msg.contains("rate limit", ignoreCase = true) || msg.contains("429")) {
-            "La IA no está disponible por ahora (límite de uso alcanzado). Probá en unos minutos o completá los datos a mano."
+            AppLocale.str(R.string.form_err_ai_quota)
         } else {
-            "$fallback: ${msg.take(150)}"
+            AppLocale.str(R.string.form_err_ai_generic, fallback, msg.take(150))
         }
     }
 
@@ -364,12 +366,12 @@ class ParkingFormViewModel(
     fun save() {
         val s = _state.value
         if (s.saving) return
-        if (s.processingPhoto != null) return fail("Esperá a que termine de procesarse la foto")
-        val vehicleId = s.vehicleId ?: return fail("Elegí un vehículo")
-        val position = s.position ?: return fail("Marcá en el mapa dónde dejaste el vehículo")
+        if (s.processingPhoto != null) return fail(AppLocale.str(R.string.form_err_wait_photo))
+        val vehicleId = s.vehicleId ?: return fail(AppLocale.str(R.string.form_err_pick_vehicle))
+        val position = s.position ?: return fail(AppLocale.str(R.string.form_err_mark_map))
         val geoPoint = GeoPoint(position.latitude, position.longitude)
         if (s.expiresAt != null && s.expiresAt <= System.currentTimeMillis()) {
-            return fail("El vencimiento tiene que ser posterior a ahora")
+            return fail(AppLocale.str(R.string.form_err_expiry_past))
         }
         val expires = s.expiresAt?.let { Timestamp(Date(it)) }
 
@@ -418,7 +420,7 @@ class ParkingFormViewModel(
                 _state.update { it.copy(saving = false, error = e.message) }
             } catch (e: Exception) {
                 Log.w(TAG, "Error guardando", e)
-                _state.update { it.copy(saving = false, error = "No se pudo guardar: ${e.message}") }
+                _state.update { it.copy(saving = false, error = AppLocale.str(R.string.form_err_save, e.message.orEmpty())) }
             }
         }
     }

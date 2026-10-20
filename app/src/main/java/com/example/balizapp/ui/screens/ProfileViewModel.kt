@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,7 +45,7 @@ class ProfileViewModel(
 
     /** Valida y guarda. Devuelve un mensaje de error para mostrar en el diálogo, o null si está bien. */
     fun saveVehicle(id: String, type: VehicleType, alias: String, plate: String): String? {
-        if (alias.isBlank()) return "Poné un nombre para el vehículo"
+        if (alias.isBlank()) return AppLocale.str(R.string.profile_error_vehicle_name_required)
         val vehicle = Vehicle(
             id = id,
             type = type,
@@ -56,7 +58,7 @@ class ProfileViewModel(
 
     fun deleteVehicle(id: String) = launchWrite {
         if (parkingRepo.hasActiveParking(id)) {
-            error.update { "Ese vehículo tiene un estacionamiento activo. Retiralo antes de borrarlo." }
+            error.update { AppLocale.str(R.string.profile_error_vehicle_active_parking) }
         } else {
             vehicleRepo.delete(id)
         }
@@ -73,7 +75,7 @@ class ProfileViewModel(
                 block()
             } catch (e: Exception) {
                 Log.w("ProfileViewModel", "Error guardando", e)
-                error.update { "No se pudo guardar: ${e.message}" }
+                error.update { AppLocale.str(R.string.profile_error_save_failed, e.message ?: "") }
             }
         }
     }

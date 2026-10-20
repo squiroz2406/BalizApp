@@ -1,5 +1,7 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
@@ -22,7 +24,7 @@ class PhotoRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) {
-    private fun requireUid(): String = auth.currentUser?.uid ?: error("No hay sesión iniciada")
+    private fun requireUid(): String = auth.currentUser?.uid ?: error(AppLocale.str(R.string.form_err_no_session))
 
     private fun photos(uid: String, parkingId: String) =
         db.collection("users").document(uid)

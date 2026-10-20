@@ -1,5 +1,7 @@
 package com.example.balizapp.data.model
 
+import com.example.balizapp.R
+import androidx.annotation.StringRes
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
@@ -30,9 +32,9 @@ data class UserProfile(
     }
 }
 
-enum class VehicleType(val firestoreValue: String, val label: String) {
-    CAR("car", "Auto"),
-    MOTORCYCLE("motorcycle", "Moto");
+enum class VehicleType(val firestoreValue: String, @StringRes val labelRes: Int) {
+    CAR("car", R.string.core_vehicle_car),
+    MOTORCYCLE("motorcycle", R.string.core_vehicle_motorcycle);
 
     companion object {
         fun fromFirestore(value: String?) = entries.firstOrNull { it.firestoreValue == value } ?: CAR

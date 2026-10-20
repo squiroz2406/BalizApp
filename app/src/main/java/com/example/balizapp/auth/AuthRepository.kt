@@ -1,5 +1,7 @@
 package com.example.balizapp.auth
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.content.Context
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
@@ -35,7 +37,7 @@ class AuthRepository(private val auth: FirebaseAuth = FirebaseAuth.getInstance()
         val credential = CredentialManager.create(context).getCredential(context, request).credential
         if (credential !is CustomCredential ||
             credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-        ) error("Tipo de credencial no soportado")
+        ) error(AppLocale.str(R.string.auth_error_unsupported_credential))
         val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
         return auth.signInWithCredential(GoogleAuthProvider.getCredential(idToken, null))
             .await().user!!
@@ -66,7 +68,7 @@ class AuthRepository(private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     // default_web_client_id lo genera el plugin google-services desde google-services.json.
     private fun webClientId(context: Context): String {
         val id = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        require(id != 0) { "Falta app/google-services.json con el cliente web de Google" }
+        require(id != 0) { AppLocale.str(R.string.auth_error_missing_google_config) }
         return context.getString(id)
     }
 }

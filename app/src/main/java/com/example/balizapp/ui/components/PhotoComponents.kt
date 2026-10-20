@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.balizapp.R
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -116,16 +118,16 @@ fun PhotoSlot(
                     takePicture.launch(uri)
                 },
                 enabled = !processing,
-            ) { Text("Cámara") }
+            ) { Text(stringResource(R.string.form_camera)) }
             OutlinedButton(
                 onClick = {
                     pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 enabled = !processing,
-            ) { Text("Galería") }
+            ) { Text(stringResource(R.string.form_gallery)) }
             if (bitmap != null) {
                 TextButton(onClick = onRemove, enabled = !processing) {
-                    Text("Quitar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.form_remove), color = MaterialTheme.colorScheme.error)
                 }
             }
         }

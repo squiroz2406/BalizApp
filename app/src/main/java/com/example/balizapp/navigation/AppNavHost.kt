@@ -1,5 +1,8 @@
 package com.example.balizapp.navigation
 
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -49,14 +52,14 @@ import kotlin.reflect.KClass
 private data class TopLevelDestination(
     val route: Any,
     val routeClass: KClass<*>,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
 )
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(HomeRoute, HomeRoute::class, "Inicio", Icons.Filled.Home),
-    TopLevelDestination(MapRoute, MapRoute::class, "Mapa", Icons.Filled.Place),
-    TopLevelDestination(ProfileRoute, ProfileRoute::class, "Perfil", Icons.Filled.Person),
+    TopLevelDestination(HomeRoute, HomeRoute::class, R.string.core_nav_home, Icons.Filled.Home),
+    TopLevelDestination(MapRoute, MapRoute::class, R.string.core_nav_map, Icons.Filled.Place),
+    TopLevelDestination(ProfileRoute, ProfileRoute::class, R.string.core_nav_profile, Icons.Filled.Person),
 )
 
 /**
@@ -96,7 +99,7 @@ fun AppNavHost(
                             selected = currentDestination.isOn(dest.routeClass),
                             onClick = { navController.navigateToTopLevel(dest.route) },
                             icon = { Icon(dest.icon, contentDescription = null) },
-                            label = { Text(dest.label) },
+                            label = { Text(stringResource(dest.labelRes)) },
                         )
                     }
                 }

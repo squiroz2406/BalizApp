@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_error_no_session">No hay sesión iniciada</string>
+    <string name="profile_error_vehicle_name_required">Poné un nombre para el vehículo</string>
+    <string name="profile_error_vehicle_active_parking">Ese vehículo tiene un estacionamiento activo. Retiralo antes de borrarlo.</string>
+    <string name="profile_error_save_failed">No se pudo guardar: %1$s</string>
+</resources>

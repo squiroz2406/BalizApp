@@ -1,5 +1,7 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
+import com.example.balizapp.R
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -26,13 +28,13 @@ object ImageCompressor {
         // 1) Solo leer el tamaño, para decodificar ya reducida (ahorra memoria).
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "No se pudo leer la imagen" }
+        require(bounds.outWidth > 0 && bounds.outHeight > 0) { AppLocale.str(R.string.form_err_image_read) }
 
         var sample = 1
         while (max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_SIDE_PX) sample *= 2
         val decoded = resolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-        } ?: error("No se pudo leer la imagen")
+        } ?: error(AppLocale.str(R.string.form_err_image_read))
 
         // 2) Escala fina + rotación EXIF en una sola transformación.
         val rotation = resolver.openInputStream(uri)?.use { exifRotation(ExifInterface(it)) } ?: 0
@@ -55,7 +57,7 @@ object ImageCompressor {
             quality -= 10
         } while (bytes.size > MAX_BYTES && quality >= 30)
         bitmap.recycle()
-        require(bytes.size <= MAX_BYTES) { "La foto es demasiado grande" }
+        require(bytes.size <= MAX_BYTES) { AppLocale.str(R.string.form_err_image_big) }
         bytes
     }
 

@@ -1,5 +1,7 @@
 package com.example.balizapp.ui.screens
 
+import com.example.balizapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.height
@@ -65,14 +67,14 @@ fun ParkingDetailScreen(
 
     LaunchedEffect(state.closed) { if (state.closed) onBack() }
 
-    ScreenScaffold(title = "Detalle", onBack = onBack) {
+    ScreenScaffold(title = stringResource(R.string.detail_title), onBack = onBack) {
         val parking = state.parking
         when {
             state.loading -> CircularProgressIndicator(Modifier.padding(24.dp))
             parking == null -> EmptyState(
                 icon = Icons.Filled.Info,
-                title = "No se encontró el estacionamiento",
-                text = "Puede que se haya borrado.",
+                title = stringResource(R.string.detail_not_found_title),
+                text = stringResource(R.string.detail_not_found_text),
             )
             else -> {
                 Column(
@@ -84,7 +86,7 @@ fun ParkingDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         state.vehicle?.let { VehicleIcon(it.type) }
                         Text(
-                            state.vehicle?.alias ?: "Vehículo",
+                            state.vehicle?.alias ?: stringResource(R.string.detail_vehicle_default),
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(start = 8.dp),
                         )
@@ -101,32 +103,32 @@ fun ParkingDetailScreen(
                     }
                     if (state.photos.isNotEmpty()) PhotosRow(state.photos)
                     HorizontalDivider()
-                    parking.addressText?.let { InfoRow("Dirección", it) }
-                    InfoRow("Desde", formatDateTime(parking.startedAt))
-                    parking.finishedAt?.let { InfoRow("Retirado", formatDateTime(it)) }
-                    parking.levelSector?.let { InfoRow("Piso o sector", it) }
-                    parking.note?.let { InfoRow("Nota", it) }
-                    parking.ruleSummary?.let { InfoRow("Regla del cartel", it) }
-                    state.vehicle?.plate?.let { InfoRow("Patente", it) }
+                    parking.addressText?.let { InfoRow(stringResource(R.string.detail_label_address), it) }
+                    InfoRow(stringResource(R.string.detail_label_since), formatDateTime(parking.startedAt))
+                    parking.finishedAt?.let { InfoRow(stringResource(R.string.detail_label_finished), formatDateTime(it)) }
+                    parking.levelSector?.let { InfoRow(stringResource(R.string.detail_label_level_sector), it) }
+                    parking.note?.let { InfoRow(stringResource(R.string.detail_label_note), it) }
+                    parking.ruleSummary?.let { InfoRow(stringResource(R.string.detail_label_rule), it) }
+                    state.vehicle?.plate?.let { InfoRow(stringResource(R.string.detail_label_plate), it) }
                     state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
 
                 if (parking.status == ParkingStatus.ACTIVE) {
-                    Button(onClick = onReturnToCar, modifier = Modifier.fillMaxWidth()) { Text("Volver al auto") }
+                    Button(onClick = onReturnToCar, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.detail_return_to_car)) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text("Editar") }
+                        OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.detail_edit)) }
                         OutlinedButton(
                             onClick = { confirmFinish = true },
                             enabled = !state.working,
                             modifier = Modifier.weight(1f),
-                        ) { Text("Ya lo retiré") }
+                        ) { Text(stringResource(R.string.detail_finish)) }
                     }
                 } else {
                     OutlinedButton(
                         onClick = { confirmDelete = true },
                         enabled = !state.working,
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Borrar del historial", color = MaterialTheme.colorScheme.error) }
+                    ) { Text(stringResource(R.string.detail_delete_history), color = MaterialTheme.colorScheme.error) }
                 }
             }
         }
@@ -134,18 +136,18 @@ fun ParkingDetailScreen(
 
     if (confirmFinish) {
         ConfirmDialog(
-            title = "¿Ya retiraste el vehículo?",
-            text = "El estacionamiento pasa al historial.",
-            confirmLabel = "Sí, lo retiré",
+            title = stringResource(R.string.detail_confirm_finish_title),
+            text = stringResource(R.string.detail_confirm_finish_text),
+            confirmLabel = stringResource(R.string.detail_confirm_finish_ok),
             onConfirm = { confirmFinish = false; vm.finish() },
             onDismiss = { confirmFinish = false },
         )
     }
     if (confirmDelete) {
         ConfirmDialog(
-            title = "¿Borrar este registro?",
-            text = "Se elimina del historial y no se puede deshacer.",
-            confirmLabel = "Borrar",
+            title = stringResource(R.string.detail_confirm_delete_title),
+            text = stringResource(R.string.detail_confirm_delete_text),
+            confirmLabel = stringResource(R.string.detail_confirm_delete_ok),
             onConfirm = { confirmDelete = false; vm.delete() },
             onDismiss = { confirmDelete = false },
         )
@@ -163,10 +165,11 @@ private fun TimeCard(parking: Parking) {
     val (title, subtitle) = when {
         !active -> {
             val end = parking.finishedAt?.toMillis() ?: now
-            "Estuvo ${formatDuration(end - parking.startedAt.toMillis())}" to null
+            stringResource(R.string.detail_time_lasted, formatDuration(end - parking.startedAt.toMillis())) to null
         }
-        expiresAt == null -> "Sin límite de tiempo" to "Estacionado hace ${formatDuration(now - parking.startedAt.toMillis())}"
-        else -> formatRemaining(expiresAt, now) to "Vence ${formatDateTime(expiresAt)}"
+        expiresAt == null -> stringResource(R.string.detail_time_no_limit) to
+            stringResource(R.string.detail_time_parked_ago, formatDuration(now - parking.startedAt.toMillis()))
+        else -> formatRemaining(expiresAt, now) to stringResource(R.string.detail_time_expires, formatDateTime(expiresAt))
     }
 
     ElevatedCard(
@@ -214,9 +217,10 @@ private fun PhotosRow(photos: Map<PhotoKind, ImageBitmap>) {
     }
 }
 
+@Composable
 private fun PhotoKind.label() = when (this) {
-    PhotoKind.PLACE -> "Foto del lugar"
-    PhotoKind.SIGN -> "Foto del cartel"
+    PhotoKind.PLACE -> stringResource(R.string.detail_photo_place)
+    PhotoKind.SIGN -> stringResource(R.string.detail_photo_sign)
 }
 
 @Composable
@@ -240,6 +244,6 @@ private fun ConfirmDialog(
         title = { Text(title) },
         text = { Text(text) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.detail_cancel)) } },
     )
 }

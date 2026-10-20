@@ -1,5 +1,6 @@
 package com.example.balizapp.data
 
+import com.example.balizapp.i18n.AppLocale
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -24,7 +25,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.Locale
 import kotlin.coroutines.resume
 
 /** Una posición con su precisión aproximada en metros (si se conoce). */
@@ -91,7 +91,7 @@ class LocationRepository(context: Context) {
     /** Dirección legible ("Av. Calchaquí 6200, Florencio Varela") o null si no se pudo resolver. */
     suspend fun addressFor(latitude: Double, longitude: Double): String? {
         if (!Geocoder.isPresent()) return null
-        val geocoder = Geocoder(appContext, Locale.forLanguageTag("es-AR"))
+        val geocoder = Geocoder(appContext, AppLocale.current().locale)
         val address: Address? = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 withTimeoutOrNull(5_000) {

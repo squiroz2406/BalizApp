@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_title">Back to my car</string>
+    <string name="nav_not_found_title">Parking spot not found</string>
+    <string name="nav_not_found_text">It may have been deleted or have no saved location.</string>
+    <string name="nav_finish">I picked it up</string>
+    <string name="nav_no_location">No location</string>
+    <string name="nav_searching_position">Finding your position…</string>
+    <string name="nav_arrived">You\'re here!</string>
+    <string name="nav_gps_low_accuracy">Low GPS accuracy (±%1$d m)</string>
+    <string name="nav_allow_location">Allow location</string>
+    <string name="nav_guide_no_permission">Allow location access to work out which way to walk.</string>
+    <string name="nav_guide_arrived">You\'re within %1$d m of your vehicle.</string>
+    <string name="nav_guide_waiting_gps">Waiting for GPS…</string>
+    <string name="nav_guide_follow_blue_line">Follow the blue line on the map: it\'s the route along streets.</string>
+    <string name="nav_calculating_route">Calculating the street route…</string>
+    <string name="nav_guide_follow_line_straight">Follow the line on the map to your vehicle (straight line, not a street route).</string>
+    <string name="nav_guide_no_compass">No compass on this phone: walk %1$s (the arrow shows the heading with north up).</string>
+    <string name="nav_guide_calibrate">Calibrate the compass by moving your phone in a figure 8.</string>
+    <string name="nav_guide_compass">Hold your phone flat and walk where the arrow points (%1$s).</string>
+    <string name="nav_mode_direct">Direct</string>
+    <string name="nav_mode_streets">By streets</string>
+    <string name="nav_route_summary">by streets · about %1$d min on foot</string>
+    <string name="nav_straight_distance">Straight line: %1$s</string>
+    <string name="nav_updating_route">Updating route…</string>
+    <string name="nav_recalculate">Recalculate</string>
+    <string name="nav_attribution">Route: OSRM (FOSSGIS) with data from © OpenStreetMap · Fix the map</string>
+    <string name="nav_vehicle_default">Your vehicle</string>
+    <string name="nav_level_sector">Floor / section: %1$s</string>
+    <string name="nav_open_maps">Open in Maps</string>
+    <string name="nav_cardinal_n">north</string>
+    <string name="nav_cardinal_ne">northeast</string>
+    <string name="nav_cardinal_e">east</string>
+    <string name="nav_cardinal_se">southeast</string>
+    <string name="nav_cardinal_s">south</string>
+    <string name="nav_cardinal_sw">southwest</string>
+    <string name="nav_cardinal_w">west</string>
+    <string name="nav_cardinal_nw">northwest</string>
+    <string name="nav_route_error_retry">Couldn\'t calculate the route. Retrying in a few seconds.</string>
+    <string name="nav_route_error_offline">No connection: can\'t calculate the street route. Showing a straight line to your vehicle.</string>
+    <string name="nav_route_saved_offline">No connection: using the last saved street route.</string>
+    <string name="nav_finish_error">Couldn\'t mark as picked up: %1$s</string>
+</resources>
