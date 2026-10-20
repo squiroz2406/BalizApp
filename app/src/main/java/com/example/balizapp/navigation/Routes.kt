@@ -17,4 +17,3 @@ import kotlinx.serialization.Serializable
 @Serializable data class ParkingFormRoute(val parkingId: String? = null)
 @Serializable data class ParkingDetailRoute(val parkingId: String)
 @Serializable data class ReturnToCarRoute(val parkingId: String)
-@Serializable object SignAssistantRoute

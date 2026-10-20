@@ -16,19 +16,21 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 | Lenguaje y UI | Kotlin, Jetpack Compose, Material 3 |
 | Navegación | Navigation Compose con rutas tipadas |
 | Arquitectura | MVVM + repositorios, StateFlow |
-| Autenticación | Firebase Authentication (email y contraseña, Google) |
-| Base de datos | Cloud Firestore |
+| Autenticación | Firebase Authentication (email y contraseña, Google con verificación de huella mediante BiometricPrompt) |
+| Base de datos | Cloud Firestore con cache persistente en disco (funciona sin conexión) |
 | Imágenes | JPEG comprimido dentro de Firestore (sin Storage: no requiere plan Blaze) |
-| Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient; rutas a pie con OSRM (servidor FOSSGIS, sin clave) |
+| Mapa y ubicación | OpenStreetMap (osmdroid), FusedLocationProviderClient; rutas a pie con OSRM (servidor FOSSGIS, sin clave); mosaicos y último recorrido guardados en disco para uso offline |
 | Sensores | Magnetómetro + acelerómetro (brújula con filtro y corrección por declinación magnética) |
 | Notificaciones | Locales con AlarmManager (exactas, con respaldo inexacto), reprogramadas al reiniciar |
-| Agente de IA | Firebase AI Logic (Gemini) |
+| Tema | Claro, oscuro o el del sistema (se elige en Perfil); el mapa también se oscurece |
+| Agente de IA | Firebase AI Logic (Gemini 3.8 Flash): lee el cartel, dice si se puede estacionar ahora y describe el lugar |
 
 ## Cómo ejecutarlo
 
 1. Clonar el repositorio y abrirlo con una versión reciente de Android Studio (el proyecto usa AGP 9).
-2. **`google-services.json`** no está en el repositorio. Descargarlo desde la consola de Firebase
-   (Configuración del proyecto → Tus apps → Android `com.example.balizapp`) y copiarlo en `app/`.
+2. **`google-services.json`** ya está en el repositorio (`app/google-services.json`), así que no hay que descargarlo.
+   Solo hay que volver a bajarlo desde la consola de Firebase (Configuración del proyecto → Tus apps → Android
+   `com.example.balizapp`) si se cambia de proyecto de Firebase. Las claves de Firebase para Android no son secretas.
 3. **Ingreso con Google:** el build de depuración firma con `app/debug-team.keystore`, una clave compartida por
    todo el grupo, así la huella es la misma en cualquier computadora. Su SHA-1 tiene que estar registrada una vez en
    la consola de Firebase (Configuración del proyecto → Tus apps → Android → Agregar huella digital):
@@ -37,6 +39,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 4. **Mapas:** se usa OpenStreetMap (biblioteca osmdroid), que no necesita clave de API ni cuenta de facturación.
 5. En la consola de Firebase, activar:
    - Authentication → proveedores **Correo electrónico/contraseña** y **Google**.
+   - **Firebase AI Logic** (Build → AI Logic → Gemini Developer API), para las funciones de IA.
    - **Firestore Database**. No hace falta Storage ni el plan Blaze: las fotos se guardan comprimidas en Firestore.
 6. Publicar las reglas de seguridad: copiar `firestore.rules` en Firestore → Reglas, o con Firebase CLI:
    `firebase deploy --only firestore:rules`.
@@ -53,7 +56,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 ```
 app/src/main/java/com/example/balizapp/
 ├─ auth/          Login, registro, verificación (repositorio + ViewModel + pantallas)
-├─ data/          Repositorios de Firestore y modelos (data/model)
+├─ data/          Repositorios de Firestore, ubicación, rutas, fotos, conectividad y modelos (data/model)
 ├─ navigation/    Rutas tipadas, NavHost y barra inferior
 ├─ notifications/ Alarmas y notificaciones de vencimiento
 ├─ ui/screens/    Una pantalla por archivo
@@ -74,5 +77,9 @@ firestore.rules   Reglas de Firestore (incluye las fotos)
 | 5 | Cámara y fotos (RF6) | Hecha |
 | 6 | Avisos de vencimiento (RF7) | Hecha |
 | 7 | Volver al auto: brújula, distancia y recorrido por calles | Hecha |
-| 8 | Agente de IA | Pendiente |
-| 9 | Cache offline con Room (opcional) | Pendiente |
+| 8 | Modo offline: cache de Firestore, aviso de conexión/sincronización, recorrido y mapa en disco | Hecha |
+| 9 | Ingreso con Google + huella, íconos de auto/moto, modo oscuro | Hecha |
+| 10 | Agente de IA: lectura del cartel (regla y vencimiento), veredicto "¿se puede estacionar ahora?" y descripción del lugar | Hecha |
+
+Para el offline se usó el cache persistente de Firestore en lugar de Room (no hace falta una base aparte).
+La carga de fotos en "Nuevo estacionamiento" muestra solo los botones Cámara y Galería hasta que haya una foto.

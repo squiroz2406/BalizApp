@@ -14,7 +14,10 @@ import com.example.balizapp.data.ImageCompressor
 import com.example.balizapp.data.LocationRepository
 import com.example.balizapp.data.ParkingRepository
 import com.example.balizapp.data.PhotoKind
+import com.example.balizapp.data.ParkingVerdict
 import com.example.balizapp.data.PhotoRepository
+import com.example.balizapp.data.SignAnalysis
+import com.example.balizapp.data.SignAnalyzer
 import com.example.balizapp.data.VehicleRepository
 import com.example.balizapp.data.model.Parking
 import com.example.balizapp.data.model.ParkingSource
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
@@ -69,6 +73,11 @@ data class ParkingFormState(
     val expiresAt: Long? = null,
     /** Chip de límite marcado: minutos del preset, NO_LIMIT o null si se eligió una hora. */
     val selectedPreset: Int? = NO_LIMIT,
+    /** IA: se está leyendo el cartel / describiendo el lugar. */
+    val analyzingSign: Boolean = false,
+    val describingPlace: Boolean = false,
+    /** Lo que la IA entendió del cartel; se muestra para que el usuario lo revise. */
+    val signAnalysis: SignAnalysis? = null,
     val saving: Boolean = false,
     val error: String? = null,
     /** Se completa al guardar: la pantalla navega cuando deja de ser null. */
@@ -89,6 +98,7 @@ class ParkingFormViewModel(
     private val vehicleRepo = VehicleRepository()
     private val locationRepo = LocationRepository(app)
     private val photoRepo = PhotoRepository()
+    private val analyzer = SignAnalyzer()
 
     private val parkingId: String? = savedStateHandle.toRoute<ParkingFormRoute>().parkingId
     /** Registro original al editar; se copia para no perder ubicación, fotos, origen, etc. */
@@ -222,7 +232,11 @@ class ParkingFormViewModel(
 
     private fun ParkingFormState.withPhoto(kind: PhotoKind, photo: FormPhoto?, changed: Boolean) = when (kind) {
         PhotoKind.PLACE -> copy(placePhoto = photo, placePhotoChanged = changed || placePhotoChanged)
-        PhotoKind.SIGN -> copy(signPhoto = photo, signPhotoChanged = changed || signPhotoChanged)
+        PhotoKind.SIGN -> copy(
+            signPhoto = photo,
+            signPhotoChanged = changed || signPhotoChanged,
+            signAnalysis = if (changed) null else signAnalysis,
+        )
     }
 
     /** Guarda o borra cada foto que cambió y devuelve las rutas finales. */
@@ -240,6 +254,72 @@ class ParkingFormViewModel(
         val place = resolve(PhotoKind.PLACE, s.placePhoto, s.placePhotoChanged, base?.placePhotoPath)
         val sign = resolve(PhotoKind.SIGN, s.signPhoto, s.signPhotoChanged, base?.signPhotoPath)
         parkingRepo.setPhotoPaths(parkingId, place, sign)
+    }
+
+    /** Lee el cartel con IA: completa la regla y el vencimiento (el usuario puede corregirlos antes de guardar). */
+    fun analyzeSign() {
+        val photo = _state.value.signPhoto ?: return fail("Primero sacá o elegí la foto del cartel")
+        if (_state.value.analyzingSign) return
+        _state.update { it.copy(analyzingSign = true, error = null) }
+        viewModelScope.launch {
+            try {
+                val analysis = analyzer.analyzeSign(photo.jpeg)
+                if (analysis == null) {
+                    _state.update { it.copy(analyzingSign = false, error = "No pude leer un cartel en esa foto. Probá con otra más cerca y derecha.") }
+                    return@launch
+                }
+                _state.update { s ->
+                    val expiry = if (analysis.verdict == ParkingVerdict.FORBIDDEN) null else suggestedExpiry(analysis)
+                    s.copy(
+                        analyzingSign = false,
+                        signAnalysis = analysis,
+                        ruleSummary = analysis.ruleSummary ?: s.ruleSummary,
+                        expiresAt = expiry ?: s.expiresAt,
+                        selectedPreset = if (expiry != null) null else s.selectedPreset,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Error leyendo el cartel", e)
+                _state.update { it.copy(analyzingSign = false, error = "No se pudo leer el cartel con IA: ${e.message?.take(300)}") }
+            }
+        }
+    }
+
+    /** Escribe en la nota una descripción del lugar sacada de la foto. */
+    fun describePlace() {
+        val s = _state.value
+        val photo = s.placePhoto ?: return fail("Primero sacá o elegí la foto del lugar")
+        if (s.describingPlace) return
+        _state.update { it.copy(describingPlace = true, error = null) }
+        viewModelScope.launch {
+            try {
+                val text = analyzer.describePlace(photo.jpeg, s.addressText)
+                _state.update {
+                    if (text == null) it.copy(describingPlace = false, error = "La IA no pudo describir el lugar.")
+                    else it.copy(describingPlace = false, note = text)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Error describiendo el lugar", e)
+                _state.update { it.copy(describingPlace = false, error = "No se pudo describir el lugar con IA: ${e.message?.take(300)}") }
+            }
+        }
+    }
+
+    /** El vencimiento más cercano entre "máximo de minutos" y "hasta la hora del cartel"; null si no hay ninguno. */
+    private fun suggestedExpiry(analysis: SignAnalysis): Long? {
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val byDuration = analysis.maxMinutes?.let { now.plusMinutes(it.toLong()).toInstant().toEpochMilli() }
+        val byClock = analysis.allowedUntil?.let { text ->
+            runCatching {
+                val (h, m) = text.split(":").map(String::toInt)
+                now.with(LocalTime.of(h, m)).withSecond(0).withNano(0)
+            }.getOrNull()?.takeIf { it.isAfter(now) }?.toInstant()?.toEpochMilli()
+        }
+        return listOfNotNull(byDuration, byClock).minOrNull()
     }
 
     fun selectVehicle(id: String) = _state.update { it.copy(vehicleId = id, error = null) }
@@ -298,7 +378,8 @@ class ParkingFormViewModel(
                             ruleSummary = s.ruleSummary.trim().ifEmpty { null },
                             startedAt = Timestamp.now(),
                             expiresAt = expires,
-                            source = ParkingSource.MANUAL,
+                            source = if (s.signAnalysis != null) ParkingSource.AGENT_SIGN else ParkingSource.MANUAL,
+                            agentConfidence = s.signAnalysis?.confidence,
                         )
                     )
                 } else {
@@ -314,6 +395,8 @@ class ParkingFormViewModel(
                             levelSector = s.levelSector.trim().ifEmpty { null },
                             ruleSummary = s.ruleSummary.trim().ifEmpty { null },
                             expiresAt = expires,
+                            source = if (s.signAnalysis != null) ParkingSource.AGENT_SIGN else base.source,
+                            agentConfidence = s.signAnalysis?.confidence ?: base.agentConfidence,
                         )
                     )
                     base.id

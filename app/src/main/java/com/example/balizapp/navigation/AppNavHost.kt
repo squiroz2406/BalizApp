@@ -43,7 +43,6 @@ import com.example.balizapp.ui.theme.ThemeMode
 import com.example.balizapp.ui.screens.ProfileViewModel
 import com.example.balizapp.ui.screens.ReturnToCarScreen
 import com.example.balizapp.ui.screens.ReturnToCarViewModel
-import com.example.balizapp.ui.screens.SignAssistantScreen
 import kotlin.reflect.KClass
 
 /** Un destino de la barra inferior. */
@@ -141,7 +140,6 @@ fun AppNavHost(
                 ParkingFormScreen(
                     vm = viewModel<ParkingFormViewModel>(),
                     onBack = { navController.popBackStack() },
-                    onOpenAssistant = { navController.navigate(SignAssistantRoute) },
                     onGoToProfile = { navController.navigateToTopLevel(ProfileRoute) },
                     onSaved = { id, wasEdit ->
                         if (wasEdit) {
@@ -171,9 +169,6 @@ fun AppNavHost(
                     // "Ya lo retiré": vuelve a Inicio, donde el registro ya aparece en el historial.
                     onFinished = { navController.popBackStack<HomeRoute>(inclusive = false) },
                 )
-            }
-            composable<SignAssistantRoute> {
-                SignAssistantScreen(onBack = { navController.popBackStack() })
             }
         }
         // Abajo (y no arriba): cada pantalla ya maneja el espacio de la barra de estado.

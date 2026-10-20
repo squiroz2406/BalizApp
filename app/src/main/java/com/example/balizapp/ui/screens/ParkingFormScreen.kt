@@ -48,7 +48,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.example.balizapp.ui.components.ParkingMiniMap
 import com.example.balizapp.ui.components.PhotoSlot
+import com.example.balizapp.data.ParkingVerdict
 import com.example.balizapp.data.PhotoKind
+import com.example.balizapp.data.SignAnalysis
 import com.example.balizapp.ui.components.ScreenScaffold
 import com.example.balizapp.ui.components.rememberLocationPermissionRequest
 import com.example.balizapp.ui.components.MapPoint
@@ -65,7 +67,6 @@ import kotlin.math.roundToInt
 fun ParkingFormScreen(
     vm: ParkingFormViewModel,
     onBack: () -> Unit,
-    onOpenAssistant: () -> Unit,
     onGoToProfile: () -> Unit,
     onSaved: (id: String, wasEdit: Boolean) -> Unit,
 ) {
@@ -106,7 +107,6 @@ fun ParkingFormScreen(
             else -> FormContent(
                 state = state,
                 vm = vm,
-                onOpenAssistant = onOpenAssistant,
                 onShowTimeDialog = { showTimeDialog = true },
                 onRequestLocationPermission = requestLocationPermission,
             )
@@ -140,7 +140,6 @@ private fun NoVehiclesCard(onGoToProfile: () -> Unit) {
 private fun ColumnScope.FormContent(
     state: ParkingFormState,
     vm: ParkingFormViewModel,
-    onOpenAssistant: () -> Unit,
     onShowTimeDialog: () -> Unit,
     onRequestLocationPermission: () -> Unit,
 ) {
@@ -150,12 +149,6 @@ private fun ColumnScope.FormContent(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (!state.isEdit) {
-            OutlinedButton(onClick = onOpenAssistant, modifier = Modifier.fillMaxWidth()) {
-                Text("Leer el cartel con el asistente")
-            }
-        }
-
         LocationSection(state, vm, onRequestLocationPermission)
 
         FieldLabel("Fotos")
@@ -166,6 +159,13 @@ private fun ColumnScope.FormContent(
             onPicked = { vm.onPhotoPicked(PhotoKind.PLACE, it) },
             onRemove = { vm.removePhoto(PhotoKind.PLACE) },
         )
+        if (state.placePhoto != null) {
+            AiButton(
+                label = "Describir el lugar con IA",
+                working = state.describingPlace,
+                onClick = vm::describePlace,
+            )
+        }
         PhotoSlot(
             label = "Foto del cartel",
             bitmap = state.signPhoto?.bitmap,
@@ -173,6 +173,14 @@ private fun ColumnScope.FormContent(
             onPicked = { vm.onPhotoPicked(PhotoKind.SIGN, it) },
             onRemove = { vm.removePhoto(PhotoKind.SIGN) },
         )
+        if (state.signPhoto != null) {
+            AiButton(
+                label = "Leer el cartel con IA",
+                working = state.analyzingSign,
+                onClick = vm::analyzeSign,
+            )
+        }
+        state.signAnalysis?.let { SignVerdictCard(it) }
 
         FieldLabel("Vehículo")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -295,6 +303,42 @@ private fun LocationSection(
             TextButton(onClick = vm::locate, enabled = !state.locating) { Text("Usar GPS") }
         } else {
             TextButton(onClick = onRequestLocationPermission) { Text("Permitir") }
+        }
+    }
+}
+
+@Composable
+private fun AiButton(label: String, working: Boolean, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, enabled = !working, modifier = Modifier.fillMaxWidth()) {
+        if (working) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.width(8.dp))
+            Text("Analizando…")
+        } else {
+            Text(label)
+        }
+    }
+}
+
+/** Lo que la IA entendió del cartel y si se puede estacionar ahora; el usuario lo revisa antes de guardar. */
+@Composable
+private fun SignVerdictCard(analysis: SignAnalysis) {
+    val (title, color) = when (analysis.verdict) {
+        ParkingVerdict.ALLOWED -> "Ahora se puede estacionar" to MaterialTheme.colorScheme.primary
+        ParkingVerdict.FORBIDDEN -> "Ahora NO se puede estacionar" to MaterialTheme.colorScheme.error
+        ParkingVerdict.UNKNOWN -> "No pude saber si se puede estacionar" to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    ElevatedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = color)
+            analysis.explanation?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            Text(
+                "Completé la regla y el vencimiento con lo que leí" +
+                    (if (analysis.confidence == "high") "." else " (con poca seguridad)") +
+                    " Revisalos antes de guardar: la IA puede equivocarse.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
