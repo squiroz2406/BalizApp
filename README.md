@@ -66,7 +66,27 @@ app/src/main/java/com/example/balizapp/
 └─ ui/theme/      Colores, tipografía y tema
 app/src/main/res/values*/strings_*.xml   Textos por pantalla; values/ es español y values-en/it/pt/de las traducciones
 firestore.rules   Reglas de Firestore (incluye las fotos)
+firestore-tests/  Tests de las reglas de Firestore con el emulador (Node)
+app/src/test/     Tests unitarios y de pantallas Compose (corren en la JVM, sin emulador)
 ```
+
+## Tests
+
+| Qué | Dónde | Cómo correrlo |
+| --- | --- | --- |
+| ViewModels, lógica de rutas, modelos, parseo de la IA | `app/src/test/java/.../{data,model,ui/screens}` | `./gradlew testDebugUnitTest` |
+| Pantallas Compose (Autenticación, Inicio, Perfil, Detalle, Formulario, Volver al auto, Mapa) | `app/src/test/java/.../ui/compose` | `./gradlew testDebugUnitTest` |
+| Reglas de seguridad de Firestore | `firestore-tests/` | `cd firestore-tests && npm ci && npm test` |
+
+- Los tests de pantallas usan Robolectric: montan la pantalla real con su ViewModel real y repositorios simulados (MockK), así que
+  no necesitan emulador ni teléfono. Los ViewModels reciben sus dependencias por constructor (con valores por defecto, para que la
+  app los cree igual que siempre).
+- **Límite conocido:** un campo de texto dentro de un `Dialog` deja a Compose sin quedar nunca inactivo en Robolectric y el test se
+  cuelga. Por eso no se prueba por pantalla el diálogo de alta/edición de vehículo; su lógica está cubierta en `ProfileViewModelTest`.
+  Tampoco se prueban cámara, galería, GPS ni brújula reales: hay que mirarlos en un teléfono.
+- Los tests de reglas necesitan Node 20+ y Java 21+ (el emulador de Firestore se descarga la primera vez). Se corren con un
+  proyecto de demostración (`demo-balizapp`), sin tocar el de verdad.
+- GitHub Actions corre todo esto en cada push a `main` y en cada pull request (`.github/workflows/tests.yml`).
 
 ## Estado
 

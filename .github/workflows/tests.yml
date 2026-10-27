@@ -42,3 +42,30 @@ jobs:
           name: reportes-de-tests
           path: app/build/reports/tests/
           retention-days: 7
+
+  # Reglas de seguridad de Firestore, contra el emulador (no toca el proyecto real).
+  firestore-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: firestore-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
+
+      # El emulador de Firestore corre sobre Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: Tests de las reglas
+        run: npm test
