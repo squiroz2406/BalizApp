@@ -49,7 +49,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -487,9 +486,6 @@ class ParkingFormViewModelTest {
         assertEquals(str(R.string.form_err_not_exists), viewModel("p1").s.error)
     }
 
-    // Bug conocido: tras fallar la carga, el colector de vehiculos recalcula loading = isEdit && original == null
-    // y lo deja en true, asi que la pantalla muestra el indicador de carga y nunca el error.
-    @Ignore("bug conocido en ParkingFormViewModel: loading vuelve a true tras un error de carga")
     @Test fun `editar un estacionamiento inexistente deja de mostrar el cargando`() {
         coEvery { parkingRepo.getParking("p1") } returns null
         assertFalse(viewModel("p1").s.loading)

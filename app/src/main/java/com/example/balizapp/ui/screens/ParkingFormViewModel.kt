@@ -123,7 +123,8 @@ class ParkingFormViewModel @JvmOverloads constructor(
                 _state.update { s ->
                     val keepSelection = s.vehicleId != null && vehicles.any { it.id == s.vehicleId }
                     s.copy(
-                        loading = s.isEdit && original == null,
+                        // Solo baja: si la carga falló (loading ya es false y original sigue null) no debe volver a true.
+                        loading = s.loading && s.isEdit && original == null,
                         vehicles = vehicles,
                         vehicleId = when {
                             keepSelection || s.isEdit -> s.vehicleId
