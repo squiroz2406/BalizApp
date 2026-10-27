@@ -15,7 +15,8 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    # Version fija (no ubuntu-latest): esta imagen trae el SDK de Android y sus licencias ya instalados.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +26,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # Instala las herramientas de Android y acepta las licencias, para que Gradle pueda
-      # descargar la plataforma que pide compileSdk.
-      - uses: android-actions/setup-android@v3
-
+      # No hace falta instalar el SDK de Android: la imagen ya lo trae y Gradle descarga solo la
+      # plataforma que pide compileSdk.
       - uses: gradle/actions/setup-gradle@v4
 
       # La clave de MapTiler no se necesita para los tests: sin local.properties queda vacía.
