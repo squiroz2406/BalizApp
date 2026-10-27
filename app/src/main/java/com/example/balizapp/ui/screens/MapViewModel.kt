@@ -27,10 +27,13 @@ data class MapUiState(
 )
 
 /** Mapa general (RF5): ubicación actual y marcadores de los estacionamientos guardados. */
-class MapViewModel(app: Application) : AndroidViewModel(app) {
-    private val locationRepo = LocationRepository(app)
-    private val parkingRepo = ParkingRepository()
-    private val vehicleRepo = VehicleRepository()
+// @JvmOverloads conserva el constructor (Application) que usa la factory por defecto de `viewModel()`.
+class MapViewModel @JvmOverloads constructor(
+    app: Application,
+    private val locationRepo: LocationRepository = LocationRepository(app),
+    private val parkingRepo: ParkingRepository = ParkingRepository(),
+    private val vehicleRepo: VehicleRepository = VehicleRepository(),
+) : AndroidViewModel(app) {
 
     private val location = MutableStateFlow(
         Pair<Boolean, GeoPosition?>(locationRepo.hasPermission(), null)

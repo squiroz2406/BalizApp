@@ -1,0 +1,70 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Si llega un push nuevo a la misma rama, se cancela la corrida anterior.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    # Version fija (no ubuntu-latest): esta imagen trae el SDK de Android y sus licencias ya instalados.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # No hace falta instalar el SDK de Android: la imagen ya lo trae y Gradle descarga solo la
+      # plataforma que pide compileSdk.
+      - uses: gradle/actions/setup-gradle@v4
+
+      # La clave de MapTiler no se necesita para los tests: sin local.properties queda vacía.
+      - name: Tests unitarios y compilación
+        run: ./gradlew testDebugUnitTest assembleDebug --stacktrace
+
+      - name: Subir reportes de tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-de-tests
+          path: app/build/reports/tests/
+          retention-days: 7
+
+  # Reglas de seguridad de Firestore, contra el emulador (no toca el proyecto real).
+  firestore-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: firestore-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
+
+      # El emulador de Firestore corre sobre Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: Tests de las reglas
+        run: npm test

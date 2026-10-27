@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Tests de reglas de Firestore
+firestore-tests/node_modules/
+*-debug.log

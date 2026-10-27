@@ -36,9 +36,12 @@ data class AuthUiState(
     val message: String? = null,
 )
 
-class AuthViewModel(app: Application) : AndroidViewModel(app) {
-    private val repo = AuthRepository()
-    private val users = UserRepository()
+// @JvmOverloads conserva el constructor (Application) que usa la factory por defecto de `viewModels()`.
+class AuthViewModel @JvmOverloads constructor(
+    app: Application,
+    private val repo: AuthRepository = AuthRepository(),
+    private val users: UserRepository = UserRepository(),
+) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 

@@ -39,10 +39,13 @@ data class ParkingDetailState(
 )
 
 /** Detalle de un estacionamiento (RF3), en tiempo real. */
-class ParkingDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
-    private val parkingRepo = ParkingRepository()
-    private val vehicleRepo = VehicleRepository()
-    private val photoRepo = PhotoRepository()
+// @JvmOverloads conserva el constructor (SavedStateHandle) que usa la factory por defecto de `viewModel()`.
+class ParkingDetailViewModel @JvmOverloads constructor(
+    savedStateHandle: SavedStateHandle,
+    private val parkingRepo: ParkingRepository = ParkingRepository(),
+    private val vehicleRepo: VehicleRepository = VehicleRepository(),
+    private val photoRepo: PhotoRepository = PhotoRepository(),
+) : ViewModel() {
     private val parkingId = savedStateHandle.toRoute<ParkingDetailRoute>().parkingId
 
     private val ui = MutableStateFlow(ParkingDetailState())

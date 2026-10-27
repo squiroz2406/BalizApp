@@ -92,15 +92,16 @@ data class ParkingFormState(
 }
 
 /** Alta y edición de un estacionamiento (RF4). El id llega en la ruta tipada. */
-class ParkingFormViewModel(
+// @JvmOverloads conserva el constructor (Application, SavedStateHandle) que usa la factory por defecto de `viewModel()`.
+class ParkingFormViewModel @JvmOverloads constructor(
     app: Application,
     savedStateHandle: SavedStateHandle,
+    private val parkingRepo: ParkingRepository = ParkingRepository(),
+    private val vehicleRepo: VehicleRepository = VehicleRepository(),
+    private val locationRepo: LocationRepository = LocationRepository(app),
+    private val photoRepo: PhotoRepository = PhotoRepository(),
+    private val analyzer: SignAnalyzer = SignAnalyzer(),
 ) : AndroidViewModel(app) {
-    private val parkingRepo = ParkingRepository()
-    private val vehicleRepo = VehicleRepository()
-    private val locationRepo = LocationRepository(app)
-    private val photoRepo = PhotoRepository()
-    private val analyzer = SignAnalyzer()
 
     private val parkingId: String? = savedStateHandle.toRoute<ParkingFormRoute>().parkingId
     /** Registro original al editar; se copia para no perder ubicación, fotos, origen, etc. */
@@ -122,7 +123,8 @@ class ParkingFormViewModel(
                 _state.update { s ->
                     val keepSelection = s.vehicleId != null && vehicles.any { it.id == s.vehicleId }
                     s.copy(
-                        loading = s.isEdit && original == null,
+                        // Solo baja: si la carga falló (loading ya es false y original sigue null) no debe volver a true.
+                        loading = s.loading && s.isEdit && original == null,
                         vehicles = vehicles,
                         vehicleId = when {
                             keepSelection || s.isEdit -> s.vehicleId

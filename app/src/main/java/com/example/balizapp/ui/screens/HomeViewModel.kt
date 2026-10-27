@@ -32,11 +32,14 @@ data class HomeUiState(
  * Además mantiene sincronizados los avisos de vencimiento (RF7) con los estacionamientos activos:
  * Inicio es la primera pantalla y queda abierta debajo de las demás mientras haya sesión.
  */
-class HomeViewModel(app: Application) : AndroidViewModel(app) {
-    private val parkings = ParkingRepository()
-    private val vehicles = VehicleRepository()
-    private val users = UserRepository()
-    private val reminders = ReminderScheduler(app)
+// @JvmOverloads conserva el constructor (Application) que usa la factory por defecto de `viewModel()`.
+class HomeViewModel @JvmOverloads constructor(
+    app: Application,
+    private val parkings: ParkingRepository = ParkingRepository(),
+    private val vehicles: VehicleRepository = VehicleRepository(),
+    private val users: UserRepository = UserRepository(),
+    private val reminders: ReminderScheduler = ReminderScheduler(app),
+) : AndroidViewModel(app) {
 
     val state: StateFlow<HomeUiState> = combine(
         parkings.observeActive(),

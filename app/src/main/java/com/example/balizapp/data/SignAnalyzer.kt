@@ -83,20 +83,7 @@ class SignAnalyzer {
             Escribí ruleSummary y explanation en $language.
         """.trimIndent()
         val response = signModel.generateContent(content { image(bitmap); text(prompt) })
-        val json = JSONObject(response.text ?: error(AppLocale.str(R.string.form_err_ai_no_response)))
-        if (!json.optBoolean("readable", false)) return null
-        return SignAnalysis(
-            ruleSummary = json.optStringOrNull("ruleSummary"),
-            verdict = when (json.optString("verdict")) {
-                "allowed" -> ParkingVerdict.ALLOWED
-                "forbidden" -> ParkingVerdict.FORBIDDEN
-                else -> ParkingVerdict.UNKNOWN
-            },
-            maxMinutes = if (json.isNull("maxMinutes")) null else json.optInt("maxMinutes").takeIf { it > 0 },
-            allowedUntil = json.optStringOrNull("allowedUntil")?.takeIf { Regex("""\d{1,2}:\d{2}""").matches(it) },
-            explanation = json.optStringOrNull("explanation"),
-            confidence = json.optString("confidence", "low"),
-        )
+        return parseSignAnalysis(response.text ?: error(AppLocale.str(R.string.form_err_ai_no_response)))
     }
 
     /** Descripción corta del lugar para recordarlo ("Frente a la farmacia, junto a un árbol"). */
@@ -110,13 +97,34 @@ class SignAnalyzer {
             inventes lo que no se ve. Respondé solo la frase, sin comillas.
         """.trimIndent()
         val response = placeModel.generateContent(content { image(bitmap); text(prompt) })
-        return response.text?.trim()?.trim('"')?.ifBlank { null }
+        return cleanPlaceDescription(response.text)
     }
-
-    private fun JSONObject.optStringOrNull(key: String): String? =
-        if (isNull(key)) null else optString(key).trim().ifBlank { null }
 
     private companion object {
         const val MODEL = "gemini-2.5-flash"
     }
 }
+
+/** Interpreta el JSON que devuelve Gemini para el cartel. Devuelve null si la foto no tenía un cartel legible. */
+internal fun parseSignAnalysis(text: String): SignAnalysis? {
+    val json = JSONObject(text)
+    if (!json.optBoolean("readable", false)) return null
+    return SignAnalysis(
+        ruleSummary = json.optStringOrNull("ruleSummary"),
+        verdict = when (json.optString("verdict")) {
+            "allowed" -> ParkingVerdict.ALLOWED
+            "forbidden" -> ParkingVerdict.FORBIDDEN
+            else -> ParkingVerdict.UNKNOWN
+        },
+        maxMinutes = if (json.isNull("maxMinutes")) null else json.optInt("maxMinutes").takeIf { it > 0 },
+        allowedUntil = json.optStringOrNull("allowedUntil")?.takeIf { Regex("""\d{1,2}:\d{2}""").matches(it) },
+        explanation = json.optStringOrNull("explanation"),
+        confidence = json.optString("confidence", "low"),
+    )
+}
+
+/** Limpia la frase que devuelve Gemini para el lugar: sin espacios ni comillas en los bordes; null si queda vacía. */
+internal fun cleanPlaceDescription(text: String?): String? = text?.trim()?.trim('"')?.ifBlank { null }
+
+private fun JSONObject.optStringOrNull(key: String): String? =
+    if (isNull(key)) null else optString(key).trim().ifBlank { null }
