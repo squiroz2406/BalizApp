@@ -26,6 +26,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -218,6 +219,89 @@ class ReturnToCarViewModelTest {
             vm.setMode(GuidanceMode.STREETS)
             val state = awaitUntil { it.routeUi.error != null }
             assertEquals(AppLocale.str(R.string.nav_route_error_offline), state.routeUi.error)
+        }
+    }
+
+    // --- Intervalos entre pedidos de ruta (con reloj controlado) ---
+
+    private val gps = MutableSharedFlow<GeoPosition>(replay = 1)
+    private var now = 1_000_000L
+
+    // Unos 90 m al este de la ruta: mas lejos que el umbral de desvio (40 m).
+    private val offRoute = GeoPosition(-34.601, -58.401)
+    private val offRouteLater = GeoPosition(-34.6011, -58.401)
+
+    private fun viewModelWithClock(): ReturnToCarViewModel {
+        every { locationRepo.positionUpdates(any()) } returns gps
+        gps.tryEmit(me)
+        return ReturnToCarViewModel(
+            app, SavedStateHandle(mapOf("parkingId" to "p1")),
+            parkingRepo, vehicleRepo, locationRepo, routeRepo, routeCache, compass,
+        ) { now }
+    }
+
+    @Test fun `si el usuario se desvia pide otra ruta solo cuando paso el intervalo minimo`() = runTest {
+        coEvery { routeRepo.walkingRoute(any(), any(), any()) } returns route
+        val vm = viewModelWithClock()
+        vm.state.test {
+            awaitUntil { it.directDistanceMeters != null }
+            vm.setMode(GuidanceMode.STREETS)
+            awaitUntil { it.routeUi.route != null }
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += 1_000 // se desvia, pero recien pidio una ruta
+            gps.emit(offRoute)
+            awaitUntil { it.myPosition == offRoute }
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += RouteRepository.MIN_INTERVAL_MS // ya paso el intervalo
+            gps.emit(offRouteLater)
+            awaitUntil { it.myPosition == offRouteLater }
+            coVerify(exactly = 2) { routeRepo.walkingRoute(any(), any(), any()) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test fun `una ruta que fallo no se reintenta hasta que pase el intervalo`() = runTest {
+        coEvery { routeRepo.walkingRoute(any(), any(), any()) } throws IOException("sin red")
+        val vm = viewModelWithClock()
+        vm.state.test {
+            awaitUntil { it.directDistanceMeters != null }
+            vm.setMode(GuidanceMode.STREETS)
+            awaitUntil { it.routeUi.error == AppLocale.str(R.string.nav_route_error_offline) }
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += 1_000 // llega otra lectura de GPS enseguida: no insiste
+            gps.emit(GeoPosition(-34.6001, -58.400))
+            awaitUntil { it.routeUi.error == AppLocale.str(R.string.nav_route_error_retry) }
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += RouteRepository.MIN_INTERVAL_MS // pasado el intervalo, reintenta
+            val later = GeoPosition(-34.6002, -58.400)
+            gps.emit(later)
+            awaitUntil { it.myPosition == later && it.routeUi.error == AppLocale.str(R.string.nav_route_error_offline) }
+            coVerify(exactly = 2) { routeRepo.walkingRoute(any(), any(), any()) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test fun `recalcular ignora los toques repetidos en menos de 3 segundos`() = runTest {
+        coEvery { routeRepo.walkingRoute(any(), any(), any()) } returns route
+        val vm = viewModelWithClock()
+        vm.state.test {
+            awaitUntil { it.directDistanceMeters != null }
+            vm.setMode(GuidanceMode.STREETS)
+            awaitUntil { it.routeUi.route != null }
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += 1_000
+            vm.recalculateRoute()
+            coVerify(exactly = 1) { routeRepo.walkingRoute(any(), any(), any()) }
+
+            now += 3_000
+            vm.recalculateRoute()
+            coVerify(exactly = 2) { routeRepo.walkingRoute(any(), any(), any()) }
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

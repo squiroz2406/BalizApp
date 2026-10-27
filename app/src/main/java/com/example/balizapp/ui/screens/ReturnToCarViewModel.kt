@@ -108,6 +108,8 @@ class ReturnToCarViewModel @JvmOverloads constructor(
     private val routeRepo: RouteRepository = RouteRepository(),
     private val routeCache: RouteCache = RouteCache(app),
     private val compass: CompassSensor = CompassSensor(app),
+    /** Hora actual en milisegundos; se inyecta para poder probar los intervalos entre pedidos de ruta. */
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : AndroidViewModel(app) {
     private val parkingId = savedStateHandle.toRoute<ReturnToCarRoute>().parkingId
 
@@ -159,7 +161,7 @@ class ReturnToCarViewModel @JvmOverloads constructor(
                 return@transform
             }
             val current = lastRoute
-            val now = System.currentTimeMillis()
+            val now = clock()
             val forced = input.recalc != routeRequest
             val offRoute = current != null && RouteMath.closestPoint(current.points, me).second > OFF_ROUTE_METERS
             val needsNew = current == null || forced || lastRouteDestination != input.car ||
@@ -259,7 +261,7 @@ class ReturnToCarViewModel @JvmOverloads constructor(
 
     /** Fuerza un nuevo cálculo de la ruta (por ejemplo, si la calle está cortada). */
     fun recalculateRoute() {
-        if (System.currentTimeMillis() - lastRequestAt < 3_000) return // evita toques repetidos
+        if (clock() - lastRequestAt < 3_000) return // evita toques repetidos
         manualRecalc.update { it + 1 }
     }
 
