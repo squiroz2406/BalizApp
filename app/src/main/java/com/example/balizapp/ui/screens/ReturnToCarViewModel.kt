@@ -98,14 +98,18 @@ data class ReturnToCarState(
  * Sensores, GPS y ruta solo están activos mientras la pantalla está visible (WhileSubscribed).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ReturnToCarViewModel(app: Application, savedStateHandle: SavedStateHandle) : AndroidViewModel(app) {
+// @JvmOverloads conserva el constructor (Application, SavedStateHandle) que usa la factory por defecto de `viewModel()`.
+class ReturnToCarViewModel @JvmOverloads constructor(
+    app: Application,
+    savedStateHandle: SavedStateHandle,
+    private val parkingRepo: ParkingRepository = ParkingRepository(),
+    private val vehicleRepo: VehicleRepository = VehicleRepository(),
+    private val locationRepo: LocationRepository = LocationRepository(app),
+    private val routeRepo: RouteRepository = RouteRepository(),
+    private val routeCache: RouteCache = RouteCache(app),
+    private val compass: CompassSensor = CompassSensor(app),
+) : AndroidViewModel(app) {
     private val parkingId = savedStateHandle.toRoute<ReturnToCarRoute>().parkingId
-    private val parkingRepo = ParkingRepository()
-    private val vehicleRepo = VehicleRepository()
-    private val locationRepo = LocationRepository(app)
-    private val routeRepo = RouteRepository()
-    private val routeCache = RouteCache(app)
-    private val compass = CompassSensor(app)
 
     private val permission = MutableStateFlow(locationRepo.hasPermission())
     private val mode = MutableStateFlow(GuidanceMode.DIRECT)
