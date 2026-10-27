@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Si llega un push nuevo a la misma rama, se cancela la corrida anterior.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Instala las herramientas de Android y acepta las licencias, para que Gradle pueda
+      # descargar la plataforma que pide compileSdk.
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # La clave de MapTiler no se necesita para los tests: sin local.properties queda vacía.
+      - name: Tests unitarios y compilación
+        run: ./gradlew testDebugUnitTest assembleDebug --stacktrace
+
+      - name: Subir reportes de tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-de-tests
+          path: app/build/reports/tests/
+          retention-days: 7
