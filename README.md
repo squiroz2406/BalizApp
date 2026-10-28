@@ -13,7 +13,7 @@ Trabajo práctico de Aplicaciones Móviles — Ingeniería en Informática, UNAJ
 
 | Área | Tecnología |
 | --- | --- |
-| Lenguaje y UI | Kotlin, Jetpack Compose, Material 3 |
+| Lenguaje y UI | Kotlin, Jetpack Compose |
 | Navegación | Navigation Compose con rutas tipadas |
 | Arquitectura | MVVM + repositorios, StateFlow |
 | Autenticación | Firebase Authentication (email y contraseña, Google con verificación de huella mediante BiometricPrompt) |

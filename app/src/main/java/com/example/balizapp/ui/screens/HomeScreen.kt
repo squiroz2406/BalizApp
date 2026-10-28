@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.example.balizapp.data.model.Parking
 import com.example.balizapp.data.model.Vehicle
 import com.example.balizapp.ui.components.EmptyState
-import com.example.balizapp.ui.components.ScreenScaffold
+
 import com.example.balizapp.ui.components.formatDateTime
 import com.example.balizapp.ui.components.formatRemaining
 import com.example.balizapp.ui.components.rememberNow
@@ -81,89 +83,117 @@ fun HomeScreen(
         matchesVehicle(it) && (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED)
     }
 
-    ScreenScaffold(title = stringResource(R.string.app_name)) {
-        Button(
-            onClick = onParkHere,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
-        ) {
-            Icon(Icons.Filled.LocationOn, contentDescription = null)
-            Text("  " + stringResource(R.string.home_park_here), style = MaterialTheme.typography.titleMedium)
-        }
-
-        when {
-            state.loading -> Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) {
-                CircularProgressIndicator()
-            }
-
-            state.active.isEmpty() && state.history.isEmpty() -> EmptyState(
-                icon = Icons.Filled.Place,
-                title = stringResource(R.string.home_empty_title),
-                text = stringResource(R.string.home_empty_text),
+    val header: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(vertical = 8.dp),
             )
+            Button(
+                onClick = onParkHere,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+            ) {
+                Icon(Icons.Filled.LocationOn, contentDescription = null)
+                Text("  " + stringResource(R.string.home_park_here), style = MaterialTheme.typography.titleMedium)
+            }
+        }
+    }
 
-            else -> {
-                if (state.vehicles.isNotEmpty()) {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        item {
-                            FilterChip(
-                                selected = selectedVehicle == null,
-                                onClick = { vehicleFilter = null },
-                                label = { Text(stringResource(R.string.home_filter_all_vehicles)) },
-                            )
-                        }
-                        items(state.vehicles.values.toList(), key = { it.id }) { v ->
-                            FilterChip(
-                                selected = selectedVehicle == v.id,
-                                onClick = { vehicleFilter = v.id },
-                                label = { Text(v.alias.ifBlank { stringResource(v.type.labelRes) }) },
-                            )
-                        }
+    Scaffold { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            when {
+                state.loading -> {
+                    header()
+                    Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) {
+                        CircularProgressIndicator()
                     }
                 }
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(StatusFilter.entries.toList()) { f ->
-                        FilterChip(
-                            selected = statusFilter == f,
-                            onClick = { statusFilter = f },
-                            label = { Text(stringResource(f.labelRes)) },
-                        )
-                    }
+
+                state.active.isEmpty() && state.history.isEmpty() -> {
+                    header()
+                    EmptyState(
+                        icon = Icons.Filled.Place,
+                        title = stringResource(R.string.home_empty_title),
+                        text = stringResource(R.string.home_empty_text),
+                    )
                 }
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (active.isEmpty() && history.isEmpty()) {
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item { header() }
                         item {
-                            Text(
-                                stringResource(R.string.home_no_results),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
-                        }
-                    }
-                    if (active.isNotEmpty()) {
-                        item { SectionLabel(stringResource(R.string.home_section_active)) }
-                        items(active, key = { it.id }) { parking ->
-                            ActiveParkingCard(parking, state.vehicles[parking.vehicleId], now) {
-                                onOpenParking(parking.id)
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (state.vehicles.isNotEmpty()) {
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        item {
+                                            FilterChip(
+                                                selected = selectedVehicle == null,
+                                                onClick = { vehicleFilter = null },
+                                                label = { Text(stringResource(R.string.home_filter_all_vehicles)) },
+                                            )
+                                        }
+                                        items(state.vehicles.values.toList(), key = { it.id }) { v ->
+                                            FilterChip(
+                                                selected = selectedVehicle == v.id,
+                                                onClick = { vehicleFilter = v.id },
+                                                label = { Text(v.alias.ifBlank { stringResource(v.type.labelRes) }) },
+                                            )
+                                        }
+                                    }
+                                }
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    items(StatusFilter.entries.toList()) { f ->
+                                        FilterChip(
+                                            selected = statusFilter == f,
+                                            onClick = { statusFilter = f },
+                                            label = { Text(stringResource(f.labelRes)) },
+                                        )
+                                    }
+                                }
                             }
                         }
-                    }
-                    if (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED) {
-                        item { SectionLabel(stringResource(R.string.home_section_history)) }
-                        if (history.isEmpty() && state.history.isEmpty()) {
+                        if (active.isEmpty() && history.isEmpty()) {
                             item {
                                 Text(
-                                    stringResource(R.string.home_history_empty),
+                                    stringResource(R.string.home_no_results),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 8.dp),
                                 )
                             }
                         }
-                        items(history, key = { it.id }) { parking ->
-                            HistoryItem(parking, state.vehicles[parking.vehicleId]) { onOpenParking(parking.id) }
+                        if (active.isNotEmpty()) {
+                            item { SectionLabel(stringResource(R.string.home_section_active)) }
+                            items(active, key = { it.id }) { parking ->
+                                ActiveParkingCard(parking, state.vehicles[parking.vehicleId], now) {
+                                    onOpenParking(parking.id)
+                                }
+                            }
+                        }
+                        if (statusFilter == StatusFilter.ALL || statusFilter == StatusFilter.FINISHED) {
+                            item { SectionLabel(stringResource(R.string.home_section_history)) }
+                            if (history.isEmpty() && state.history.isEmpty()) {
+                                item {
+                                    Text(
+                                        stringResource(R.string.home_history_empty),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            items(history, key = { it.id }) { parking ->
+                                HistoryItem(parking, state.vehicles[parking.vehicleId]) { onOpenParking(parking.id) }
+                            }
                         }
                     }
                 }
