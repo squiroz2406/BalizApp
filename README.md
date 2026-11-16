@@ -9,7 +9,7 @@ así que las dos apps leen y escriben los mismos datos y las reglas `firestore.r
 
 ## Cómo ejecutarla
 
-No funciona en Expo Go: usa módulos nativos (Firebase nativo, MapLibre, biometría), por eso hace falta un *development build*.
+No funciona en Expo Go: usa módulos nativos (Firebase nativo, MapLibre, biometría), por eso hace falta un _development build_.
 
 ```bash
 npm install
@@ -46,28 +46,26 @@ npm run typecheck   # tsc --noEmit
 
 ## Equivalencias Kotlin → React Native
 
-| Área | App Kotlin | App React Native |
-| --- | --- | --- |
-| UI | Jetpack Compose + Material 3 | React Native + componentes propios (`src/components/ui.tsx`) con la misma paleta |
-| Navegación | Navigation Compose, rutas tipadas | React Navigation (stack + tabs), rutas tipadas en `AppNavigator.tsx` |
-| Arquitectura | MVVM, `ViewModel` + `StateFlow` | Hooks (`useParkingForm`, `useReturnToCar`, `useData`) + lógica pura testeable (`formLogic`, `returnToCarLogic`, `homeFilters`) |
-| Auth | Firebase Auth + Credential Manager | `@react-native-firebase/auth` + `@react-native-google-signin/google-signin` |
-| Huella | `BiometricPrompt` | `expo-local-authentication` |
-| Base de datos | Firestore con cache persistente | `@react-native-firebase/firestore` (cache persistente nativo, offline igual que antes) |
-| Fotos | JPEG comprimido dentro de Firestore | Igual (`expo-image-picker` + `expo-image-manipulator`, base64 ↔ `Bytes`) |
-| Ubicación | `FusedLocationProviderClient` + `Geocoder` | `expo-location` (posición, geocodificación inversa) |
-| Brújula | Magnetómetro + acelerómetro + declinación | `expo-location` `watchHeadingAsync` (rumbo ya corregido al norte geográfico) + `expo-sensors` para detectar si hay sensor |
-| Mapa | osmdroid + MapTiler | `@maplibre/maplibre-react-native` + MapTiler/OSM; paquetes offline con `OfflineManager` |
-| Rutas a pie | OSRM (FOSSGIS) | Igual (`routeRepository.ts`), con el mismo intervalo mínimo, recálculo al desviarse y recorrido guardado (AsyncStorage) |
-| Avisos | `AlarmManager` + `BroadcastReceiver` | `expo-notifications` con notificaciones programadas (reprogramadas al reiniciar) |
-| IA | Firebase AI Logic (Gemini 2.5 Flash) | `firebase/ai` (JS) con el mismo prompt y esquema JSON |
-| Tema / idioma | `AppLocale` + `values-xx/` | `src/i18n` con los **mismos 270 textos en 5 idiomas** (convertidos del XML con `tools/xml2json.py`) |
-| Conectividad | `ConnectivityManager` | `@react-native-community/netinfo` |
+| Área          | App Kotlin                                 | App React Native                                                                                                               |
+| ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| UI            | Jetpack Compose + Material 3               | React Native + componentes propios (`src/components/ui.tsx`) con la misma paleta                                               |
+| Navegación    | Navigation Compose, rutas tipadas          | React Navigation (stack + tabs), rutas tipadas en `AppNavigator.tsx`                                                           |
+| Arquitectura  | MVVM, `ViewModel` + `StateFlow`            | Hooks (`useParkingForm`, `useReturnToCar`, `useData`) + lógica pura testeable (`formLogic`, `returnToCarLogic`, `homeFilters`) |
+| Auth          | Firebase Auth + Credential Manager         | `@react-native-firebase/auth` + `@react-native-google-signin/google-signin`                                                    |
+| Huella        | `BiometricPrompt`                          | `expo-local-authentication`                                                                                                    |
+| Base de datos | Firestore con cache persistente            | `@react-native-firebase/firestore` (cache persistente nativo, offline igual que antes)                                         |
+| Fotos         | JPEG comprimido dentro de Firestore        | Igual (`expo-image-picker` + `expo-image-manipulator`, base64 ↔ `Bytes`)                                                       |
+| Ubicación     | `FusedLocationProviderClient` + `Geocoder` | `expo-location` (posición, geocodificación inversa)                                                                            |
+| Brújula       | Magnetómetro + acelerómetro + declinación  | `expo-location` `watchHeadingAsync` (rumbo ya corregido al norte geográfico) + `expo-sensors` para detectar si hay sensor      |
+| Mapa          | osmdroid + MapTiler                        | `@maplibre/maplibre-react-native` + MapTiler/OSM; paquetes offline con `OfflineManager`                                        |
+| Rutas a pie   | OSRM (FOSSGIS)                             | Igual (`routeRepository.ts`), con el mismo intervalo mínimo, recálculo al desviarse y recorrido guardado (AsyncStorage)        |
+| Avisos        | `AlarmManager` + `BroadcastReceiver`       | `expo-notifications` con notificaciones programadas (reprogramadas al reiniciar)                                               |
+| IA            | Firebase AI Logic (Gemini 2.5 Flash)       | `firebase/ai` (JS) con el mismo prompt y esquema JSON                                                                          |
+| Tema / idioma | `AppLocale` + `values-xx/`                 | `src/i18n` con los **mismos 270 textos en 5 idiomas** (convertidos del XML con `tools/xml2json.py`)                            |
+| Conectividad  | `ConnectivityManager`                      | `@react-native-community/netinfo`                                                                                              |
 
 ## Diferencias a tener en cuenta
 
-- **No se probó en un teléfono.** En esta migración se verificó que el TypeScript compila, que los 103 tests pasan, que `expo prebuild` resuelve todos los
-  plugins y que Metro empaqueta la app para Android. Falta la prueba real en dispositivo (GPS, brújula, cámara, login con Google, notificaciones).
 - **Alarmas exactas (Android 12+)**: `expo-notifications` usa alarmas exactas si el usuario concedió "Alarmas y recordatorios". No hay forma de consultar
   ese permiso desde JavaScript, así que Perfil muestra siempre el botón "Permitir alarmas exactas" en Android 12+.
 - **Brújula**: el rumbo viene de `expo-location` (usa el mismo sensor), no del filtro pasa-bajos propio de la versión Kotlin. Si la flecha se ve más
