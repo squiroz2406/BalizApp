@@ -1,0 +1,84 @@
+{
+  "expo": {
+    "name": "BalizApp",
+    "slug": "balizapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "balizapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12131A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.balizapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "BalizApp usa tu ubicación para guardar dónde dejaste el vehículo y guiarte de vuelta.",
+        "NSCameraUsageDescription": "BalizApp usa la cámara para fotografiar el lugar y el cartel de estacionamiento.",
+        "NSPhotoLibraryUsageDescription": "BalizApp usa tus fotos para adjuntar el lugar o el cartel de estacionamiento.",
+        "NSFaceIDUsageDescription": "BalizApp usa Face ID para verificar tu identidad al ingresar con Google."
+      }
+    },
+    "android": {
+      "package": "com.example.balizapp",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#12131A"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "POST_NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-dev-client",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          },
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BalizApp usa tu ubicación para guardar dónde dejaste el vehículo y guiarte de vuelta."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "BalizApp usa la cámara para fotografiar el lugar y el cartel de estacionamiento.",
+          "photosPermission": "BalizApp usa tus fotos para adjuntar el lugar o el cartel de estacionamiento.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "color": "#8A5100"
+        }
+      ],
+      "@maplibre/maplibre-react-native"
+    ]
+  }
+}
