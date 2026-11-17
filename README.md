@@ -1,22 +1,32 @@
 # BalizApp (React Native)
 
 Migración de la app Android nativa (Kotlin + Jetpack Compose) a **React Native con Expo (development build) y TypeScript**.
-Guarda dónde dejaste el auto o la moto, controla cuánto tiempo podés estar ahí y te guía a pie de vuelta. Un agente de IA
-(Gemini) lee la foto del cartel y propone el vencimiento.
+Guarda dónde dejaste el auto o la moto, controla cuánto tiempo podés estar ahí y te guía a pie de vuelta.
 
 Usa **el mismo proyecto de Firebase y la misma estructura de Firestore** que la app Kotlin (mismos nombres de campo y valores),
 así que las dos apps leen y escriben los mismos datos y las reglas `firestore.rules` no cambian.
 
 ## Cómo ejecutarla
 
-No funciona en Expo Go: usa módulos nativos (Firebase nativo, MapLibre, biometría), por eso hace falta un _development build_.
+No funciona en Expo Go: usa módulos nativos (Firebase nativo, MapLibre, biometría), así que se compila como app Android.
+
+**Para ver la app funcionando** (versión _release_: lleva el JavaScript empaquetado, no necesita servidor de Metro ni conexión a la PC):
 
 ```bash
 npm install
-cp .env.example .env        # completar las claves (ver abajo)
-npm run prebuild            # genera android/ (y ios/ si se agrega)
-npm run android             # compila e instala en un teléfono/emulador (necesita Android Studio / SDK)
-npm start                   # servidor de Metro para el development build
+cp .env.example .env                 # completar EXPO_PUBLIC_MAPTILER_KEY (ver abajo)
+npm run prebuild                     # genera android/
+npx expo run:android --variant release   # compila e instala en el teléfono/emulador conectado por USB (necesita Android Studio / SDK)
+```
+
+Si ya hay un teléfono conectado con la depuración USB activada, queda instalada y se abre sola. El `.env` se incorpora al compilar:
+si se cambia una clave hay que volver a compilar.
+
+**Para desarrollar** (recarga en vivo con _development build_):
+
+```bash
+npm run android             # compila e instala el development build
+npm start                   # servidor de Metro (en un teléfono por USB: adb reverse tcp:8081 tcp:8081)
 ```
 
 Alternativa en la nube: `npx eas build --profile development --platform android` (requiere cuenta de Expo).
@@ -29,13 +39,9 @@ Alternativa en la nube: `npx eas build --profile development --platform android`
    con `app/debug-team.keystore` (`F5:DE:06:5D:E0:BE:97:2E:04:EE:C9:5C:1A:66:71:9F:03:07:20:BD`). `expo prebuild` genera su propio
    `android/app/debug.keystore`: o bien se registra su SHA-1 (`cd android && ./gradlew signingReport`), o se copia
    `debug-team.keystore` encima de `android/app/debug.keystore`.
-3. **IA (Gemini)**: `@react-native-firebase` no incluye Firebase AI Logic, así que se usa el SDK de JavaScript (`firebase/ai`) y necesita la
-   clave de una **app Web** del mismo proyecto (la clave Android está restringida por paquete y huella y desde JS da 403).
-   Consola de Firebase → Configuración del proyecto → Tus apps → Agregar app Web → copiar `apiKey` y `appId` a
-   `EXPO_PUBLIC_FIREBASE_WEB_API_KEY` y `EXPO_PUBLIC_FIREBASE_WEB_APP_ID`. Sin eso la app anda, pero los botones de IA muestran un error.
-4. **Mapa**: `EXPO_PUBLIC_MAPTILER_KEY` (equivale a `MAPTILER_KEY` de `local.properties`). Sin clave se usan los mosaicos de OpenStreetMap,
+3. **Mapa**: `EXPO_PUBLIC_MAPTILER_KEY` (equivale a `MAPTILER_KEY` de `local.properties`). Sin clave se usan los mosaicos de OpenStreetMap,
    que funcionan pero **no permiten precargar el mapa sin conexión**.
-5. **Firestore**: publicar `firestore.rules` (`firebase deploy --only firestore:rules`), igual que antes.
+4. **Firestore**: publicar `firestore.rules` (`firebase deploy --only firestore:rules`), igual que antes.
 
 ## Tests y verificación
 
@@ -60,7 +66,6 @@ npm run typecheck   # tsc --noEmit
 | Mapa          | osmdroid + MapTiler                        | `@maplibre/maplibre-react-native` + MapTiler/OSM; paquetes offline con `OfflineManager`                                        |
 | Rutas a pie   | OSRM (FOSSGIS)                             | Igual (`routeRepository.ts`), con el mismo intervalo mínimo, recálculo al desviarse y recorrido guardado (AsyncStorage)        |
 | Avisos        | `AlarmManager` + `BroadcastReceiver`       | `expo-notifications` con notificaciones programadas (reprogramadas al reiniciar)                                               |
-| IA            | Firebase AI Logic (Gemini 2.5 Flash)       | `firebase/ai` (JS) con el mismo prompt y esquema JSON                                                                          |
 | Tema / idioma | `AppLocale` + `values-xx/`                 | `src/i18n` con los **mismos 270 textos en 5 idiomas** (convertidos del XML con `tools/xml2json.py`)                            |
 | Conectividad  | `ConnectivityManager`                      | `@react-native-community/netinfo`                                                                                              |
 
@@ -79,7 +84,7 @@ npm run typecheck   # tsc --noEmit
 ```
 App.tsx                      Proveedores (idioma, tema, sesión) y guardia de login
 src/auth/                    Sesión, huella, validaciones y pantallas de login/registro/verificación
-src/data/                    Modelos, repositorios de Firestore, ubicación, brújula, rutas, IA, fotos
+src/data/                    Modelos, repositorios de Firestore, ubicación, brújula, rutas, fotos
 src/notifications/           Avisos de vencimiento
 src/navigation/              Tabs + stack, sincronización de avisos, toque en notificación
 src/screens/                 Inicio, Mapa, Perfil, Formulario, Detalle, Volver al auto (+ lógica pura)

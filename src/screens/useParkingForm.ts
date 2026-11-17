@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { precacheTilesAround } from '../components/offlineTiles';
-import { suggestedExpiry, expiryAtTime } from '../data/expiry';
+import { expiryAtTime } from '../data/expiry';
 import { compressImage } from '../data/imageCompressor';
 import { addressFor, currentPosition, hasLocationPermission, requestLocationPermission } from '../data/locationService';
 import { newParking, type GeoPosition, type Parking, type Vehicle } from '../data/models';
@@ -15,8 +15,6 @@ import {
   updateParking,
 } from '../data/parkingRepository';
 import { deletePhoto, loadPhoto, savePhoto, type PhotoKind } from '../data/photoRepository';
-import { aiErrorMessage, analyzeSign, describePlace } from '../data/signAnalyzer';
-import type { SignAnalysis } from '../data/signParsing';
 import { observeVehicles } from '../data/vehicleRepository';
 import { t } from '../i18n';
 import { NO_LIMIT, defaultVehicleId, trimOrNull, validateForm } from './formLogic';
@@ -45,9 +43,6 @@ export interface FormState {
   expiresAt: number | null;
   /** Chip de límite marcado: minutos del preset, NO_LIMIT o null si se eligió una hora. */
   selectedPreset: number | null;
-  analyzingSign: boolean;
-  describingPlace: boolean;
-  signAnalysis: SignAnalysis | null;
   saving: boolean;
   error: string | null;
   savedId: string | null;
@@ -73,9 +68,6 @@ const initial = (isEdit: boolean): FormState => ({
   processingPhoto: null,
   expiresAt: null,
   selectedPreset: NO_LIMIT,
-  analyzingSign: false,
-  describingPlace: false,
-  signAnalysis: null,
   saving: false,
   error: null,
   savedId: null,
@@ -229,46 +221,6 @@ export function useParkingForm(parkingId: string | undefined) {
     [update],
   );
 
-  /** Lee el cartel con IA: completa la regla y el vencimiento (el usuario puede corregirlos antes de guardar). */
-  const analyzeSignPhoto = useCallback(async () => {
-    const s = state;
-    if (!s.signPhoto) return fail(t('form_err_sign_photo_first'));
-    if (s.analyzingSign) return;
-    update({ analyzingSign: true, error: null });
-    try {
-      const analysis = await analyzeSign(s.signPhoto);
-      if (!analysis) return update({ analyzingSign: false, error: t('form_err_sign_unreadable') });
-      update((cur) => {
-        const expiry = analysis.verdict === 'forbidden' ? null : suggestedExpiry(analysis);
-        return {
-          analyzingSign: false,
-          signAnalysis: analysis,
-          ruleSummary: analysis.ruleSummary ?? cur.ruleSummary,
-          expiresAt: expiry ?? cur.expiresAt,
-          selectedPreset: expiry != null ? null : cur.selectedPreset,
-        };
-      });
-    } catch (e) {
-      console.warn('Error leyendo el cartel', e);
-      update({ analyzingSign: false, error: aiErrorMessage(e, t('form_err_sign_ai')) });
-    }
-  }, [state, update, fail]);
-
-  /** Escribe en la nota una descripción del lugar sacada de la foto. */
-  const describePlacePhoto = useCallback(async () => {
-    const s = state;
-    if (!s.placePhoto) return fail(t('form_err_place_photo_first'));
-    if (s.describingPlace) return;
-    update({ describingPlace: true, error: null });
-    try {
-      const text = await describePlace(s.placePhoto, s.addressText);
-      update(text == null ? { describingPlace: false, error: t('form_err_place_ai_empty') } : { describingPlace: false, note: text });
-    } catch (e) {
-      console.warn('Error describiendo el lugar', e);
-      update({ describingPlace: false, error: aiErrorMessage(e, t('form_err_place_ai')) });
-    }
-  }, [state, update, fail]);
-
   const setNoLimit = () => update({ expiresAt: null, selectedPreset: NO_LIMIT, error: null });
   const setPreset = (minutes: number) =>
     update({ expiresAt: Date.now() + minutes * 60_000, selectedPreset: minutes, error: null });
@@ -304,8 +256,6 @@ export function useParkingForm(parkingId: string | undefined) {
         id = await createParking(
           newParking({
             ...fields,
-            source: s.signAnalysis ? 'agent_sign' : 'manual',
-            agentConfidence: s.signAnalysis?.confidence ?? null,
           }),
         );
       } else {
@@ -339,15 +289,13 @@ export function useParkingForm(parkingId: string | undefined) {
     setManualPosition,
     pickPhoto,
     removePhoto,
-    analyzeSign: analyzeSignPhoto,
-    describePlace: describePlacePhoto,
     save,
   };
 }
 
 function photoPatch(kind: PhotoKind, photo: string | null, changed: boolean): Partial<FormState> {
   if (kind === 'place') return { placePhoto: photo, ...(changed ? { placePhotoChanged: true } : {}) };
-  return { signPhoto: photo, ...(changed ? { signPhotoChanged: true, signAnalysis: null } : {}) };
+  return { signPhoto: photo, ...(changed ? { signPhotoChanged: true } : {}) };
 }
 
 /** Guarda o borra cada foto que cambió y actualiza las rutas del estacionamiento. */

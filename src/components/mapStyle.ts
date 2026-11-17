@@ -9,7 +9,7 @@ export const hasMapTiler = mapTilerKey !== '';
 
 export function mapStyleFor(dark: boolean) {
   const tiles = hasMapTiler
-    ? [`https://api.maptiler.com/maps/${dark ? 'streets-v2-dark' : 'streets-v2'}/256/{z}/{x}/{y}.png?key=${mapTilerKey}`]
+    ? [`https://api.maptiler.com/maps/${dark ? 'streets-v2-dark' : 'streets-v2'}/256/{z}/{x}/{y}@2x.png?key=${mapTilerKey}`]
     : ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'];
   return {
     version: 8 as const,

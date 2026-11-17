@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { BalizMap } from '../components/BalizMap';
 import { Base64Image } from '../components/Photo';
-import { Button, Card, Chip, EmptyState, ErrorText, Screen, SectionTitle, TextField, Txt, VehicleIcon } from '../components/ui';
+import { Button, Chip, EmptyState, ErrorText, Screen, SectionTitle, TextField, Txt, VehicleIcon } from '../components/ui';
 import type { PhotoKind } from '../data/photoRepository';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
@@ -64,15 +64,6 @@ export default function ParkingFormScreen() {
             onPick={form.pickPhoto}
             onRemove={form.removePhoto}
           />
-          {s.placePhoto && (
-            <Button
-              label={s.describingPlace ? t('form_analyzing') : t('form_describe_place_ai')}
-              icon="creation"
-              variant="tonal"
-              loading={s.describingPlace}
-              onPress={form.describePlace}
-            />
-          )}
           <PhotoSlot
             kind="sign"
             label={t('form_sign_photo_label')}
@@ -82,26 +73,6 @@ export default function ParkingFormScreen() {
             onPick={form.pickPhoto}
             onRemove={form.removePhoto}
           />
-          {s.signPhoto && (
-            <Button
-              label={s.analyzingSign ? t('form_analyzing') : t('form_read_sign_ai')}
-              icon="creation"
-              variant="tonal"
-              loading={s.analyzingSign}
-              onPress={form.analyzeSign}
-            />
-          )}
-          {s.signAnalysis && (
-            <Card tone={s.signAnalysis.verdict === 'allowed' ? 'success' : s.signAnalysis.verdict === 'forbidden' ? 'error' : 'surface'}>
-              <Txt variant="titleMedium">
-                {t(`form_verdict_${s.signAnalysis.verdict}`)}
-              </Txt>
-              {s.signAnalysis.explanation ? <Txt>{s.signAnalysis.explanation}</Txt> : null}
-              <Txt variant="small" color={colors.onSurfaceVariant}>
-                {t(s.signAnalysis.confidence === 'low' ? 'form_ai_review_note_low' : 'form_ai_review_note')}
-              </Txt>
-            </Card>
-          )}
 
           <SectionTitle>{t('form_section_time_limit')}</SectionTitle>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
